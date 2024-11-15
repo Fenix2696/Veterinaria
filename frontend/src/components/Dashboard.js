@@ -4,70 +4,116 @@ const Dashboard = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [pets, setPets] = useState([]);
   const [owners, setOwners] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (currentPage === 'pets') {
-      fetch('http://localhost:5000/api/pets')
-        .then(res => res.json())
-        .then(data => setPets(data))
-        .catch(error => console.error('Error:', error));
-    } else if (currentPage === 'owners') {
-      fetch('http://localhost:5000/api/owners')
-        .then(res => res.json())
-        .then(data => setOwners(data))
-        .catch(error => console.error('Error:', error));
+    const fetchData = async () => {
+      setLoading(true);
+      setError('');
+      const token = localStorage.getItem('token');
+
+      try {
+        if (currentPage === 'pets') {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/pets`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (!response.ok) throw new Error('Error al cargar mascotas');
+          const data = await response.json();
+          setPets(Array.isArray(data) ? data : []);
+        } else if (currentPage === 'owners') {
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/owners`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (!response.ok) throw new Error('Error al cargar propietarios');
+          const data = await response.json();
+          setOwners(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (currentPage !== 'dashboard') {
+      fetchData();
     }
   }, [currentPage]);
 
   const renderPetList = () => (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-4">Mascotas</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left">Nombre</th>
-              <th className="px-6 py-3 text-left">Especie</th>
-              <th className="px-6 py-3 text-left">Edad</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {pets.map(pet => (
-              <tr key={pet._id}>
-                <td className="px-6 py-4">{pet.name}</td>
-                <td className="px-6 py-4">{pet.species}</td>
-                <td className="px-6 py-4">{pet.age}</td>
+      {loading && <div className="text-center">Cargando...</div>}
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Especie
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Edad
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {pets.map((pet) => (
+                <tr key={pet._id}>
+                  <td className="px-6 py-4 whitespace-nowrap">{pet.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pet.species}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pet.age}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 
   const renderOwnerList = () => (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-4">Propietarios</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left">Nombre</th>
-              <th className="px-6 py-3 text-left">Email</th>
-              <th className="px-6 py-3 text-left">Teléfono</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {owners.map(owner => (
-              <tr key={owner._id}>
-                <td className="px-6 py-4">{owner.name}</td>
-                <td className="px-6 py-4">{owner.email}</td>
-                <td className="px-6 py-4">{owner.phone}</td>
+      {loading && <div className="text-center">Cargando...</div>}
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Teléfono
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {owners.map((owner) => (
+                <tr key={owner._id}>
+                  <td className="px-6 py-4 whitespace-nowrap">{owner.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{owner.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{owner.phone}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 
@@ -80,7 +126,8 @@ const Dashboard = ({ onLogout }) => {
       default:
         return (
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-2xl font-bold">Bienvenido al Sistema Veterinario</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Bienvenido al Sistema Veterinario</h2>
+            <p className="mt-2 text-gray-600">Selecciona una opción del menú para comenzar.</p>
           </div>
         );
     }
