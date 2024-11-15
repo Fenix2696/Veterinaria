@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.App {
+  min-height: 100vh;
+}
+
+input:focus {
+  outline: 2px solid #4F46E5;
+  outline-offset: -1px;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
