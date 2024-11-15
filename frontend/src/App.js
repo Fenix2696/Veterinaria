@@ -4,53 +4,87 @@ import './App.css';
 const LoginForm = ({ onLoginSuccess }) => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials)
       });
       
+      const data = await response.json();
+      
       if (response.ok) {
-        const data = await response.json();
         localStorage.setItem('token', data.token);
         onLoginSuccess();
       } else {
-        setError('Credenciales inválidas');
+        setError(data.message || 'Credenciales inválidas');
       }
     } catch (error) {
-      setError('Error de conexión');
+      setError('Error de conexión al servidor');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-center mb-6">Inicio de Sesión</h2>
-        {error && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{error}</div>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full p-2 border rounded"
-            value={credentials.email}
-            onChange={e => setCredentials({...credentials, email: e.target.value})}
-          />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            className="w-full p-2 border rounded"
-            value={credentials.password}
-            onChange={e => setCredentials({...credentials, password: e.target.value})}
-          />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
+      <div className="bg-white p-8 rounded-xl shadow-2xl w-96">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Veterinaria</h1>
+          <p className="text-gray-500 mt-2">Inicia sesión en tu cuenta</p>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-gray-700 mb-2">Email</label>
+            <input
+              type="email"
+              value={credentials.email}
+              onChange={e => setCredentials({...credentials, email: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="tucorreo@ejemplo.com"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 mb-2">Contraseña</label>
+            <input
+              type="password"
+              value={credentials.password}
+              onChange={e => setCredentials({...credentials, password: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+            disabled={loading}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Ingresar
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Cargando...
+              </div>
+            ) : (
+              'Iniciar Sesión'
+            )}
           </button>
         </form>
       </div>
@@ -62,70 +96,133 @@ const Dashboard = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [pets, setPets] = useState([]);
   const [owners, setOwners] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (currentPage === 'pets') {
-      fetch('http://localhost:5000/api/pets')
-        .then(res => res.json())
-        .then(data => setPets(data))
-        .catch(error => console.error('Error:', error));
-    } else if (currentPage === 'owners') {
-      fetch('http://localhost:5000/api/owners')
-        .then(res => res.json())
-        .then(data => setOwners(data))
-        .catch(error => console.error('Error:', error));
+    const fetchData = async () => {
+      setLoading(true);
+      setError('');
+      const token = localStorage.getItem('token');
+
+      try {
+        if (currentPage === 'pets') {
+          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/pets', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (!response.ok) throw new Error('Error al cargar mascotas');
+          const data = await response.json();
+          setPets(Array.isArray(data) ? data : []);
+        } else if (currentPage === 'owners') {
+          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/owners', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (!response.ok) throw new Error('Error al cargar propietarios');
+          const data = await response.json();
+          setOwners(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (currentPage !== 'dashboard') {
+      fetchData();
     }
   }, [currentPage]);
 
   const renderPetList = () => (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-4">Mascotas</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left">Nombre</th>
-              <th className="px-6 py-3 text-left">Especie</th>
-              <th className="px-6 py-3 text-left">Edad</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {pets.map(pet => (
-              <tr key={pet._id}>
-                <td className="px-6 py-4">{pet.name}</td>
-                <td className="px-6 py-4">{pet.species}</td>
-                <td className="px-6 py-4">{pet.age}</td>
+      {loading && (
+        <div className="flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+          {error}
+        </div>
+      )}
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Especie
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Edad
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {pets.map((pet) => (
+                <tr key={pet._id}>
+                  <td className="px-6 py-4 whitespace-nowrap">{pet.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pet.species}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pet.age}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 
   const renderOwnerList = () => (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-4">Propietarios</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left">Nombre</th>
-              <th className="px-6 py-3 text-left">Email</th>
-              <th className="px-6 py-3 text-left">Teléfono</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {owners.map(owner => (
-              <tr key={owner._id}>
-                <td className="px-6 py-4">{owner.name}</td>
-                <td className="px-6 py-4">{owner.email}</td>
-                <td className="px-6 py-4">{owner.phone}</td>
+      {loading && (
+        <div className="flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+          {error}
+        </div>
+      )}
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Teléfono
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {owners.map((owner) => (
+                <tr key={owner._id}>
+                  <td className="px-6 py-4 whitespace-nowrap">{owner.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{owner.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{owner.phone}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 
@@ -138,7 +235,8 @@ const Dashboard = ({ onLogout }) => {
       default:
         return (
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-2xl font-bold">Bienvenido al Sistema Veterinario</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Bienvenido al Sistema Veterinario</h2>
+            <p className="mt-2 text-gray-600">Selecciona una opción del menú para comenzar.</p>
           </div>
         );
     }

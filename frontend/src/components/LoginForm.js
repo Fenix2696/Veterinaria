@@ -11,12 +11,14 @@ const LoginForm = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
+      const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(credentials)
       });
-      console.log('Response:', await response.json());
+      
       const data = await response.json();
       
       if (response.ok) {
