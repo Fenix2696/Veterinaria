@@ -9,6 +9,7 @@ const LoginForm = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    console.log('Intentando login...'); // Debug
 
     try {
       const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
