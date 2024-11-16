@@ -130,9 +130,8 @@ const Dashboard = ({ onLogout }) => {
       }
 
       try {
-        let response;
         if (currentPage === 'pets') {
-          response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/pets', {
+          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/pets', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -146,7 +145,7 @@ const Dashboard = ({ onLogout }) => {
           const data = await response.json();
           setPets(Array.isArray(data) ? data : []);
         } else if (currentPage === 'owners') {
-          response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/owners', {
+          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/owners', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -162,8 +161,7 @@ const Dashboard = ({ onLogout }) => {
         }
       } catch (err) {
         console.error('Error:', err);
-        if (response?.status === 401 || response?.status === 403) {
-          console.log('Token inválido');
+        if (err.message === 'Token inválido') {
           onLogout();
         }
         setError(err.message);
@@ -175,7 +173,7 @@ const Dashboard = ({ onLogout }) => {
     if (currentPage !== 'dashboard') {
       fetchData();
     }
-  }, [currentPage]);
+  }, [currentPage, onLogout]);
 
   const renderPetList = () => (
     <div className="bg-white shadow rounded-lg p-6">

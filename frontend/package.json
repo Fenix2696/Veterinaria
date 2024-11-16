@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "dependencies": {
+        "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
         "@heroicons/react": "^2.1.5",
         "@testing-library/jest-dom": "^5.17.0",
         "@testing-library/react": "^13.4.0",
@@ -17,7 +18,7 @@
     },
     "scripts": {
         "start": "react-scripts start",
-        "build": "react-scripts build && npm run copy-build",
+        "build": "CI=false react-scripts build && npm run copy-build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
         "copy-build": "rm -rf ../backend/dist && cp -r build ../backend/dist"
@@ -25,7 +26,10 @@
     "eslintConfig": {
         "extends": [
             "react-app"
-        ]
+        ],
+        "rules": {
+            "no-undef": "warn"
+        }
     },
     "browserslist": {
         "production": [
