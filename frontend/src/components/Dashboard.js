@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from 'react';
-
 const Dashboard = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [pets, setPets] = useState([]);
@@ -13,28 +11,49 @@ const Dashboard = ({ onLogout }) => {
       setError('');
       const token = localStorage.getItem('token');
 
+      if (!token) {
+        setError('No hay sesión activa');
+        setLoading(false);
+        return;
+      }
+
       try {
         if (currentPage === 'pets') {
-          const response = await fetch(`${process.env.REACT_APP_API_URL}/pets`, {
+          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/pets', {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
           });
-          if (!response.ok) throw new Error('Error al cargar mascotas');
+          
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${await response.text()}`);
+          }
+          
           const data = await response.json();
           setPets(Array.isArray(data) ? data : []);
         } else if (currentPage === 'owners') {
-          const response = await fetch(`${process.env.REACT_APP_API_URL}/owners`, {
+          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/owners', {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
           });
-          if (!response.ok) throw new Error('Error al cargar propietarios');
+          
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${await response.text()}`);
+          }
+          
           const data = await response.json();
           setOwners(Array.isArray(data) ? data : []);
         }
       } catch (err) {
+        console.error('Error completo:', err);
         setError(err.message);
+        if (err.message.includes('403')) {
+          localStorage.removeItem('token');
+          window.location.reload();
+        }
       } finally {
         setLoading(false);
       }

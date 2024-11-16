@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
+const authMiddleware = require('../middleware/auth');
 
 module.exports = (ownersCollection) => {
   // Obtener todos los propietarios
-  router.get('/', async (req, res) => {
+  router.get('/', authMiddleware, async (req, res) => {
     try {
       const owners = await ownersCollection.find().toArray();
       res.json(owners);

@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
+const authMiddleware = require('../middleware/auth');
 
 module.exports = (petsCollection) => {
   // Obtener todas las mascotas
-  router.get('/', async (req, res) => {
+  router.get('/', authMiddleware, async (req, res) => {
     try {
       const pets = await petsCollection.find().toArray();
       res.json(pets);
@@ -13,6 +14,7 @@ module.exports = (petsCollection) => {
     }
   });
 
+  
   // Añadir una nueva mascota
   router.post('/', async (req, res) => {
     try {
