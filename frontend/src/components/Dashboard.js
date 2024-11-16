@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+
 const Dashboard = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [pets, setPets] = useState([]);
@@ -11,37 +13,43 @@ const Dashboard = ({ onLogout }) => {
       setError('');
       const token = localStorage.getItem('token');
 
-      if (!token) {
-        setError('No hay sesión activa');
-        setLoading(false);
-        return;
-      }
+      console.log('Token:', token); // Para debug
 
       try {
         if (currentPage === 'pets') {
           const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/pets', {
+            method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'include'
           });
           
           if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${await response.text()}`);
+            const errorText = await response.text();
+            console.log('Error Response:', errorText);
+            throw new Error(`Error ${response.status}: ${errorText}`);
           }
           
           const data = await response.json();
           setPets(Array.isArray(data) ? data : []);
         } else if (currentPage === 'owners') {
           const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/owners', {
+            method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'include'
           });
           
           if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${await response.text()}`);
+            const errorText = await response.text();
+            console.log('Error Response:', errorText);
+            throw new Error(`Error ${response.status}: ${errorText}`);
           }
           
           const data = await response.json();
@@ -51,8 +59,8 @@ const Dashboard = ({ onLogout }) => {
         console.error('Error completo:', err);
         setError(err.message);
         if (err.message.includes('403')) {
-          localStorage.removeItem('token');
-          window.location.reload();
+          console.log('Token inválido, cerrando sesión...');
+          onLogout();
         }
       } finally {
         setLoading(false);
@@ -62,7 +70,9 @@ const Dashboard = ({ onLogout }) => {
     if (currentPage !== 'dashboard') {
       fetchData();
     }
-  }, [currentPage]);
+  }, [currentPage, onLogout]);
+
+  // ... resto del código del Dashboard
 
   const renderPetList = () => (
     <div className="bg-white shadow rounded-lg p-6">
