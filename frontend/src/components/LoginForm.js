@@ -14,7 +14,10 @@ const LoginForm = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    console.log('Intentando login con:', credentials); // Debug
+    console.log('Attempting login with:', {
+      url: 'https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login',
+      credentials
+    });
 
     try {
       const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
