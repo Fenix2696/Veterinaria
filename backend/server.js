@@ -11,6 +11,7 @@ const port = process.env.PORT || 5000;
 const mongoUri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB;
 
+// Configuración de CORS mejorada
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -20,34 +21,34 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static('dist'));
 
+// Variables globales
 let db;
 let usersCollection;
 let petsCollection;
 let ownersCollection;
 
+// Ruta de prueba/estado
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    dbConnected: !!db,
+    collections: {
+      users: !!usersCollection,
+      pets: !!petsCollection,
+      owners: !!ownersCollection
+    }
+  });
+});
+
+// Conexión a MongoDB
 MongoClient.connect(mongoUri)
-  .then(async client => {
+  .then(client => {
     console.log('Connected to MongoDB');
     db = client.db(dbName);
-    console.log('Database selected:', dbName);
     
-    // Inicializar colecciones
     usersCollection = db.collection('users');
     petsCollection = db.collection('pets');
     ownersCollection = db.collection('owners');
-    console.log('Collections initialized');
-    
-    // Crear índices de manera segura
-    try {
-      await Promise.all([
-        usersCollection.createIndex({ email: 1 }, { unique: true }),
-        petsCollection.createIndex({ name: 1 }),
-        ownersCollection.createIndex({ email: 1 }, { unique: true })
-      ]);
-      console.log('Indices created successfully');
-    } catch (error) {
-      console.log('Index creation error (non-fatal):', error);
-    }
     
     // Configurar rutas
     const authRoutes = require('./routes/auth')(usersCollection);
@@ -58,12 +59,7 @@ MongoClient.connect(mongoUri)
     app.use('/api/pets', petsRoutes);
     app.use('/api/owners', ownersRoutes);
 
-    // Ruta de healthcheck
-    app.get('/api/health', (req, res) => {
-      res.json({ status: 'ok', message: 'Server is running' });
-    });
-
-    // Servir frontend
+    // Ruta catch-all para el frontend
     app.get('*', (req, res) => {
       res.sendFile(path.join(__dirname, 'dist', 'index.html'));
     });
@@ -71,23 +67,27 @@ MongoClient.connect(mongoUri)
     // Iniciar servidor
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
+      console.log('Environment:', process.env.NODE_ENV);
     });
   })
   .catch(error => {
     console.error('Error connecting to MongoDB:', error);
-    // No salir del proceso en producción
-    if (process.env.NODE_ENV === 'production') {
-      console.log('Continuing despite MongoDB connection error');
-    } else {
-      process.exit(1);
-    }
   });
 
-// Manejo de errores
+// Manejo global de errores
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
-  res.status(500).json({ 
+  res.status(500).json({
     message: 'Error interno del servidor',
-    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
+});
+
+// Manejo de errores no capturados
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
 });
