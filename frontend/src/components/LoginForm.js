@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 
+import React, { useState } from 'react';
+
 const LoginForm = ({ onLoginSuccess }) => {
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [credentials, setCredentials] = useState({
+    email: 'admin@veterinaria.com',
+    password: 'admin123'
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -9,31 +14,40 @@ const LoginForm = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    console.log('Intentando login...'); // Debug
+    console.log('Intentando login con:', credentials); // Debug
 
     try {
       const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(credentials)
+        body: JSON.stringify(credentials),
+        credentials: 'include'
       });
       
+      console.log('Response status:', response.status); // Debug
+      
       const data = await response.json();
+      console.log('Response data:', data); // Debug
       
       if (response.ok) {
         localStorage.setItem('token', data.token);
+        console.log('Token guardado:', data.token); // Debug
         onLoginSuccess();
       } else {
-        setError(data.message || 'Error al iniciar sesión');
+        setError(data.message || 'Credenciales inválidas');
       }
     } catch (error) {
+      console.error('Error completo:', error);
       setError('Error de conexión al servidor');
     } finally {
       setLoading(false);
     }
   };
+
+  // ... resto del código ...
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
