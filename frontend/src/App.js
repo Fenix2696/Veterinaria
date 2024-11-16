@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+const API_URL = 'https://proyecto-veterinaria-uf7y.onrender.com/api';
+
 const LoginForm = ({ onLoginSuccess }) => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -11,41 +13,39 @@ const LoginForm = ({ onLoginSuccess }) => {
     setLoading(true);
     setError('');
     
-    console.log('Intentando login con:', { email: credentials.email }); // No logueamos la contraseña
-
     try {
-      const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
+      console.log('Iniciando intento de login:', { email: credentials.email });
+
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(credentials)
       });
       
-      console.log('Respuesta del servidor:', {
+      console.log('Respuesta recibida:', {
         status: response.status,
         statusText: response.statusText
       });
 
       const data = await response.json();
-      console.log('Datos de respuesta:', {
-        success: response.ok,
-        hasToken: !!data.token,
-        message: data.message
-      });
       
-      if (response.ok && data.token) {
-        localStorage.setItem('token', data.token);
-        console.log('Token almacenado exitosamente');
-        onLoginSuccess();
-      } else {
-        console.error('Error en login:', data.message || 'Error desconocido');
-        setError(data.message || 'Error de autenticación');
+      if (!response.ok) {
+        throw new Error(data.message || 'Error durante el inicio de sesión');
       }
+
+      if (!data.token) {
+        throw new Error('No se recibió token del servidor');
+      }
+
+      console.log('Login exitoso');
+      localStorage.setItem('token', data.token);
+      onLoginSuccess();
+      
     } catch (error) {
-      console.error('Error completo:', error);
-      setError('Error de conexión al servidor. Por favor, intente más tarde.');
+      console.error('Error durante el login:', error);
+      setError(error.message || 'Error de conexión. Por favor, intente más tarde.');
     } finally {
       setLoading(false);
     }
@@ -124,44 +124,47 @@ const Dashboard = ({ onLogout }) => {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        console.log('No hay token');
+        console.log('No se encontró token');
         onLogout();
         return;
       }
 
       try {
-        if (currentPage === 'pets') {
-          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/pets', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+        let endpoint = '';
+        let setData;
 
-          if (!response.ok) {
-            throw new Error('Error al cargar mascotas');
-          }
-
-          const data = await response.json();
-          setPets(Array.isArray(data) ? data : []);
-        } else if (currentPage === 'owners') {
-          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/owners', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error('Error al cargar propietarios');
-          }
-
-          const data = await response.json();
-          setOwners(Array.isArray(data) ? data : []);
+        switch (currentPage) {
+          case 'pets':
+            endpoint = '/pets';
+            setData = setPets;
+            break;
+          case 'owners':
+            endpoint = '/owners';
+            setData = setOwners;
+            break;
+          default:
+            return;
         }
+
+        const response = await fetch(`${API_URL}${endpoint}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            throw new Error('Sesión expirada');
+          }
+          throw new Error(`Error al cargar ${currentPage}`);
+        }
+
+        const data = await response.json();
+        setData(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error('Error:', err);
-        if (err.message === 'Token inválido') {
+        console.error('Error al cargar datos:', err);
+        if (err.message === 'Sesión expirada') {
           onLogout();
         }
         setError(err.message);
@@ -327,8 +330,31 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await fetch(`${API_URL}/auth/verify`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error('Token inválido');
+          }
+
+          setIsLoggedIn(true);
+        } catch (error) {
+          console.error('Error al verificar token:', error);
+          localStorage.removeItem('token');
+          setIsLoggedIn(false);
+        }
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const handleLogout = () => {
