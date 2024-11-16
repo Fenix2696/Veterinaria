@@ -7,13 +7,17 @@ const Dashboard = ({ onLogout }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  seEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError('');
       const token = localStorage.getItem('token');
-
-      console.log('Token:', token); // Para debug
+  
+      if (!token) {
+        console.log('No hay token almacenado');
+        onLogout();
+        return;
+      }
 
       try {
         if (currentPage === 'pets') {
@@ -57,16 +61,14 @@ const Dashboard = ({ onLogout }) => {
         }
       } catch (err) {
         console.error('Error completo:', err);
-        setError(err.message);
-        if (err.message.includes('403')) {
-          console.log('Token inválido, cerrando sesión...');
+        if (err.message.includes('401') || err.message.includes('403')) {
+          console.log('Token inválido o expirado');
           onLogout();
         }
-      } finally {
-        setLoading(false);
+        setError(err.message);
       }
     };
-
+  
     if (currentPage !== 'dashboard') {
       fetchData();
     }

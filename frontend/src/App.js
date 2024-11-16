@@ -10,24 +10,42 @@ const LoginForm = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
+    console.log('Intentando login con:', { email: credentials.email }); // No logueamos la contraseña
 
     try {
       const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(credentials)
       });
       
+      console.log('Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText
+      });
+
       const data = await response.json();
+      console.log('Datos de respuesta:', {
+        success: response.ok,
+        hasToken: !!data.token,
+        message: data.message
+      });
       
-      if (response.ok) {
+      if (response.ok && data.token) {
         localStorage.setItem('token', data.token);
+        console.log('Token almacenado exitosamente');
         onLoginSuccess();
       } else {
-        setError(data.message || 'Credenciales inválidas');
+        console.error('Error en login:', data.message || 'Error desconocido');
+        setError(data.message || 'Error de autenticación');
       }
     } catch (error) {
-      setError('Error de conexión al servidor');
+      console.error('Error completo:', error);
+      setError('Error de conexión al servidor. Por favor, intente más tarde.');
     } finally {
       setLoading(false);
     }
@@ -105,29 +123,50 @@ const Dashboard = ({ onLogout }) => {
       setError('');
       const token = localStorage.getItem('token');
 
+      if (!token) {
+        console.log('No hay token');
+        onLogout();
+        return;
+      }
+
       try {
+        let response;
         if (currentPage === 'pets') {
-          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/pets', {
+          response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/pets', {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
           });
-          if (!response.ok) throw new Error('Error al cargar mascotas');
+
+          if (!response.ok) {
+            throw new Error('Error al cargar mascotas');
+          }
+
           const data = await response.json();
           setPets(Array.isArray(data) ? data : []);
         } else if (currentPage === 'owners') {
-          const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/owners', {
+          response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/owners', {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
           });
-          if (!response.ok) throw new Error('Error al cargar propietarios');
+
+          if (!response.ok) {
+            throw new Error('Error al cargar propietarios');
+          }
+
           const data = await response.json();
           setOwners(Array.isArray(data) ? data : []);
         }
       } catch (err) {
+        console.error('Error:', err);
+        if (response?.status === 401 || response?.status === 403) {
+          console.log('Token inválido');
+          onLogout();
+        }
         setError(err.message);
-        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
