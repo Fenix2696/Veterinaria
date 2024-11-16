@@ -59,10 +59,10 @@ MongoClient.connect(mongoUri)
   .then(client => {
     console.log('Connected to MongoDB');
     db = client.db(dbName);
+    console.log('Database selected:', dbName);
     
     usersCollection = db.collection('users');
-    petsCollection = db.collection('pets');
-    ownersCollection = db.collection('owners');
+    console.log('Collections initialized');
     
     // Crear índices
     usersCollection.createIndex({ email: 1 }, { unique: true });
@@ -119,10 +119,10 @@ MongoClient.connect(mongoUri)
 
 // Middleware de manejo de errores global
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('Server error:', err);
   res.status(500).json({ 
     message: 'Error interno del servidor',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
@@ -146,3 +146,4 @@ process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   process.exit(1);
 });
+
