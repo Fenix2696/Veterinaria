@@ -65,3 +65,30 @@ button {
 .card:hover {
   @apply shadow-lg transform translate-y-[-2px];
 }
+
+/* Estilos adicionales para los botones */
+.btn-primary {
+  @apply px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200;
+}
+
+.btn-danger {
+  @apply px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-200;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors duration-200;
+}
+
+/* Estilos para los formularios */
+.form-input {
+  @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500;
+}
+
+/* Estilos para los modales */
+.modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-50;
+}
+
+.modal-content {
+  @apply bg-white rounded-lg shadow-xl w-full max-w-md;
+}
