@@ -1,27 +1,94 @@
 # Dependencies
-node_modules/
-/.pnp
-.pnp.js
-
-# Testing
-/coverage
+node_modules
+/frontend/node_modules
+/backend/node_modules
 
 # Production
-build/
-dist/
+/dist
+/frontend/build
+/backend/dist
 
-# Misc
-.DS_Store
+# Environment variables
 .env
+/frontend/.env
+/backend/.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# IDE
-.vscode/
-.idea/
+# Testing
+/coverage
+/frontend/coverage
+/backend/coverage
+.nyc_output
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Misc
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local files
+*.local
+
+# Test files
+/backend/tests/*.test.js
+/backend/tests/temp
+/frontend/src/**/*.test.js
+
+# Lock files (opcional, dependiendo de tu preferencia)
+# package-lock.json
+# yarn.lock
+
+# Build scripts
+render-build.ps1
+render-build.sh
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional Next.js build output
+.next
+
+# Nuxt.js build output
+.nuxt
+
+# Build cache
+.cache
+
+# Serverless directories
+.serverless/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# dotenv environment variables file
+.env
+.env.test

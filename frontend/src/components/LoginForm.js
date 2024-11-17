@@ -1,5 +1,12 @@
+import React, { useState } from 'react';
+
+const API_URL = 'https://proyecto-veterinaria-uf7y.onrender.com/api';
+
 const LoginForm = ({ onLoginSuccess }) => {
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [credentials, setCredentials] = useState({ 
+    email: '', 
+    password: '' 
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -9,39 +16,28 @@ const LoginForm = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      console.log('Iniciando intento de login con:', credentials.email);
-      
-      const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           email: credentials.email.trim(),
           password: credentials.password
-        }),
-        credentials: 'include'
-      });
-
-      console.log('Respuesta del servidor:', {
-        status: response.status,
-        statusText: response.statusText
+        })
       });
 
       const data = await response.json();
-      console.log('Datos de respuesta:', {
-        success: data.success,
-        hasToken: !!data.token
-      });
 
       if (response.ok && data.token) {
         localStorage.setItem('token', data.token);
+        console.log('Login exitoso');
         onLoginSuccess();
       } else {
-        throw new Error(data.message || 'Error en la autenticación');
+        throw new Error(data.message || 'Error de autenticación');
       }
     } catch (error) {
-      console.error('Error completo:', error);
+      console.error('Error durante el login:', error);
       setError(error.message || 'Error al intentar iniciar sesión');
     } finally {
       setLoading(false);
@@ -106,3 +102,5 @@ const LoginForm = ({ onLoginSuccess }) => {
     </div>
   );
 };
+
+export default LoginForm;
