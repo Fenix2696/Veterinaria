@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
-const authenticateToken = require('../middleware/auth');
+const { authenticateToken, authorizeRole } = require('../middleware/auth');
 
 function configurePetsRoutes(petsCollection) {
-  // Aplicar middleware de autenticación a todas las rutas
+  // Aplicar middleware de autenticación
   router.use(authenticateToken);
 
   // GET - Obtener todas las mascotas
@@ -14,10 +14,10 @@ function configurePetsRoutes(petsCollection) {
       res.json(pets);
     } catch (error) {
       console.error('Error al obtener mascotas:', error);
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         message: 'Error al obtener las mascotas',
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -25,24 +25,24 @@ function configurePetsRoutes(petsCollection) {
   // GET - Obtener una mascota por ID
   router.get('/:id', async (req, res) => {
     try {
-      const pet = await petsCollection.findOne({ 
-        _id: new ObjectId(req.params.id) 
+      const pet = await petsCollection.findOne({
+        _id: new ObjectId(req.params.id)
       });
-      
+
       if (!pet) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Mascota no encontrada' 
+        return res.status(404).json({
+          success: false,
+          message: 'Mascota no encontrada'
         });
       }
-      
+
       res.json(pet);
     } catch (error) {
       console.error('Error al obtener mascota:', error);
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         message: 'Error al obtener la mascota',
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -71,19 +71,18 @@ function configurePetsRoutes(petsCollection) {
       };
 
       const result = await petsCollection.insertOne(newPet);
-      
+
       res.status(201).json({
         success: true,
         message: 'Mascota creada exitosamente',
-        pet: { ...newPet, _id: result.insertedId }
+        data: { ...newPet, _id: result.insertedId }
       });
-
     } catch (error) {
       console.error('Error al crear mascota:', error);
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         message: 'Error al crear la mascota',
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -125,9 +124,8 @@ function configurePetsRoutes(petsCollection) {
       res.json({
         success: true,
         message: 'Mascota actualizada exitosamente',
-        pet: { _id: req.params.id, ...updateData }
+        data: { _id: req.params.id, ...updateData }
       });
-
     } catch (error) {
       console.error('Error al actualizar mascota:', error);
       res.status(500).json({
@@ -156,7 +154,6 @@ function configurePetsRoutes(petsCollection) {
         success: true,
         message: 'Mascota eliminada exitosamente'
       });
-
     } catch (error) {
       console.error('Error al eliminar mascota:', error);
       res.status(500).json({

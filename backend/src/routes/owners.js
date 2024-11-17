@@ -1,17 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
-const authenticateToken = require('../middleware/auth');
+const { authenticateToken, authorizeRole } = require('../middleware/auth');
 
 function configureOwnersRoutes(ownersCollection) {
-  // Aplicar middleware de autenticación a todas las rutas
+  // Aplicar middleware de autenticación
   router.use(authenticateToken);
 
   // GET - Obtener todos los propietarios
   router.get('/', async (req, res) => {
     try {
       const owners = await ownersCollection.find({}).toArray();
-      res.json(owners);
+      res.json({
+        success: true,
+        data: owners
+      });
     } catch (error) {
       console.error('Error al obtener propietarios:', error);
       res.status(500).json({
@@ -36,7 +39,10 @@ function configureOwnersRoutes(ownersCollection) {
         });
       }
 
-      res.json(owner);
+      res.json({
+        success: true,
+        data: owner
+      });
     } catch (error) {
       console.error('Error al obtener propietario:', error);
       res.status(500).json({
@@ -71,7 +77,7 @@ function configureOwnersRoutes(ownersCollection) {
 
       const newOwner = {
         name,
-        email,
+        email: email.toLowerCase(),
         phone,
         address: address || '',
         createdAt: new Date(),
@@ -84,9 +90,8 @@ function configureOwnersRoutes(ownersCollection) {
       res.status(201).json({
         success: true,
         message: 'Propietario creado exitosamente',
-        owner: { ...newOwner, _id: result.insertedId }
+        data: { ...newOwner, _id: result.insertedId }
       });
-
     } catch (error) {
       console.error('Error al crear propietario:', error);
       res.status(500).json({
@@ -125,7 +130,7 @@ function configureOwnersRoutes(ownersCollection) {
 
       const updateData = {
         name,
-        email,
+        email: email.toLowerCase(),
         phone,
         address: address || '',
         updatedAt: new Date(),
@@ -147,9 +152,8 @@ function configureOwnersRoutes(ownersCollection) {
       res.json({
         success: true,
         message: 'Propietario actualizado exitosamente',
-        owner: { _id: req.params.id, ...updateData }
+        data: { _id: req.params.id, ...updateData }
       });
-
     } catch (error) {
       console.error('Error al actualizar propietario:', error);
       res.status(500).json({
@@ -178,7 +182,6 @@ function configureOwnersRoutes(ownersCollection) {
         success: true,
         message: 'Propietario eliminado exitosamente'
       });
-
     } catch (error) {
       console.error('Error al eliminar propietario:', error);
       res.status(500).json({
