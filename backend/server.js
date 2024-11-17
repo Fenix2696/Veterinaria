@@ -100,9 +100,9 @@ MongoClient.connect(mongoUri, {
   });
   
   // Configurar rutas
-  const authRoutes = require('./routes/auth')(usersCollection);
-  const petsRoutes = require('./routes/pets')(petsCollection);
-  const ownersRoutes = require('./routes/owners')(ownersCollection);
+  const authRoutes = require('./src/routes/auth')(usersCollection);
+  const petsRoutes = require('./src/routes/pets')(petsCollection);
+  const ownersRoutes = require('./src/routes/owners')(ownersCollection);
 
   // Aplicar rutas con sus prefijos
   app.use('/api/auth', authRoutes);
