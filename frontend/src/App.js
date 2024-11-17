@@ -4,8 +4,11 @@ import dashboardGif from './assets/images/dashboard.gif';
 import Modal from './components/Modal';
 import PetForm from './components/PetForm';
 import OwnerForm from './components/OwnerForm';
+import LoginForm from './components/LoginForm';
 
 const API_URL = 'https://proyecto-veterinaria-uf7y.onrender.com/api';
+
+// Aquí comienza el componente Dashboard...
 
 const Dashboard = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -155,6 +158,8 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
+  // Continúa con renderPetList, renderOwnerList y renderContent...
+
   const renderPetList = () => (
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">
@@ -164,7 +169,7 @@ const Dashboard = ({ onLogout }) => {
             setSelectedItem(null);
             setIsModalOpen(true);
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
         >
           Agregar Mascota
         </button>
@@ -203,7 +208,7 @@ const Dashboard = ({ onLogout }) => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {pets.map((pet) => (
-                <tr key={pet._id}>
+                <tr key={pet._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">{pet.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{pet.species}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{pet.age}</td>
@@ -213,7 +218,7 @@ const Dashboard = ({ onLogout }) => {
                         setSelectedItem(pet);
                         setIsModalOpen(true);
                       }}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
+                      className="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200"
                     >
                       Editar
                     </button>
@@ -222,7 +227,7 @@ const Dashboard = ({ onLogout }) => {
                         setItemToDelete(pet);
                         setIsDeleteModalOpen(true);
                       }}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 transition-colors duration-200"
                     >
                       Eliminar
                     </button>
@@ -236,8 +241,6 @@ const Dashboard = ({ onLogout }) => {
     </div>
   );
 
-  // ... Continúa con el renderOwnerList y el resto del Dashboard ...
-
   const renderOwnerList = () => (
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">
@@ -247,7 +250,7 @@ const Dashboard = ({ onLogout }) => {
             setSelectedItem(null);
             setIsModalOpen(true);
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
         >
           Agregar Propietario
         </button>
@@ -286,7 +289,7 @@ const Dashboard = ({ onLogout }) => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {owners.map((owner) => (
-                <tr key={owner._id}>
+                <tr key={owner._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">{owner.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{owner.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{owner.phone}</td>
@@ -296,7 +299,7 @@ const Dashboard = ({ onLogout }) => {
                         setSelectedItem(owner);
                         setIsModalOpen(true);
                       }}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
+                      className="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200"
                     >
                       Editar
                     </button>
@@ -305,7 +308,7 @@ const Dashboard = ({ onLogout }) => {
                         setItemToDelete(owner);
                         setIsDeleteModalOpen(true);
                       }}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 transition-colors duration-200"
                     >
                       Eliminar
                     </button>
@@ -335,29 +338,33 @@ const Dashboard = ({ onLogout }) => {
               <img
                 src={dashboardGif}
                 alt="Bienvenida Veterinaria"
-                className="rounded-lg shadow-lg max-w-xl w-full mb-6"
-                style={{ maxHeight: '400px', objectFit: 'cover' }}
+                className="rounded-lg shadow-lg max-w-xl w-full mb-6 object-cover"
+                style={{ maxHeight: '400px' }}
               />
               <div className="text-center max-w-2xl mx-auto">
                 <p className="text-xl text-gray-600 mb-8">
                   Sistema integral para la gestión de tu clínica veterinaria
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-6 bg-blue-50 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-2">
-                      Gestión de Mascotas
-                    </h3>
-                    <p className="text-blue-600">
-                      Registra y administra la información de todas las mascotas
-                    </p>
+                  <div className="transform transition-all duration-300 hover:scale-105">
+                    <div className="p-6 bg-blue-50 rounded-xl shadow-md hover:shadow-lg border border-blue-100">
+                      <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                        Gestión de Mascotas
+                      </h3>
+                      <p className="text-blue-600">
+                        Registra y administra la información de todas las mascotas
+                      </p>
+                    </div>
                   </div>
-                  <div className="p-6 bg-green-50 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold text-green-800 mb-2">
-                      Gestión de Propietarios
-                    </h3>
-                    <p className="text-green-600">
-                      Mantén actualizada la información de los propietarios
-                    </p>
+                  <div className="transform transition-all duration-300 hover:scale-105">
+                    <div className="p-6 bg-green-50 rounded-xl shadow-md hover:shadow-lg border border-green-100">
+                      <h3 className="text-lg font-semibold text-green-800 mb-2">
+                        Gestión de Propietarios
+                      </h3>
+                      <p className="text-green-600">
+                        Mantén actualizada la información de los propietarios
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -367,49 +374,84 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
+  // Continúa con el return del Dashboard...
+
+
   return (
     <div className="flex h-screen bg-gray-100">
-      <div className="w-64 bg-gray-800 p-4">
-        <h1 className="text-white text-xl font-bold mb-8">Veterinaria</h1>
-        <nav className="space-y-2">
-          <button
-            onClick={() => setCurrentPage('dashboard')}
-            className={`w-full text-left p-2 rounded ${
-              currentPage === 'dashboard' ? 'bg-gray-600 text-white' : 'text-white hover:bg-gray-700'
-            }`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setCurrentPage('pets')}
-            className={`w-full text-left p-2 rounded ${
-              currentPage === 'pets' ? 'bg-gray-600 text-white' : 'text-white hover:bg-gray-700'
-            }`}
-          >
-            Mascotas
-          </button>
-          <button
-            onClick={() => setCurrentPage('owners')}
-            className={`w-full text-left p-2 rounded ${
-              currentPage === 'owners' ? 'bg-gray-600 text-white' : 'text-white hover:bg-gray-700'
-            }`}
-          >
-            Propietarios
-          </button>
-          <button
-            onClick={onLogout}
-            className="w-full text-left p-2 text-white hover:bg-red-600 rounded mt-8"
-          >
-            Cerrar Sesión
-          </button>
-        </nav>
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-800 shadow-lg">
+        <div className="flex flex-col h-full">
+          <div className="p-4">
+            <h1 className="text-white text-xl font-bold text-center py-4">
+              Veterinaria
+            </h1>
+          </div>
+
+          <nav className="flex-1 px-4 py-6 space-y-4">
+            <button
+              onClick={() => setCurrentPage('dashboard')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                currentPage === 'dashboard' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Dashboard
+            </button>
+
+            <button
+              onClick={() => setCurrentPage('pets')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                currentPage === 'pets' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+              </svg>
+              Mascotas
+            </button>
+
+            <button
+              onClick={() => setCurrentPage('owners')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                currentPage === 'owners' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Propietarios
+            </button>
+          </nav>
+
+          <div className="p-4">
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors duration-200"
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
       </div>
 
+      {/* Main Content */}
       <div className="flex-1 p-8 overflow-auto">
         {renderContent()}
       </div>
 
-      {/* Modales para crear/editar */}
+      {/* Modal para crear/editar */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => {
@@ -452,7 +494,7 @@ const Dashboard = ({ onLogout }) => {
       >
         <div className="p-6">
           <p className="mb-6">
-            ¿Estás seguro de que deseas eliminar este {currentPage === 'pets' ? 'mascota' : 'propietario'}?
+            ¿Estás seguro de que deseas eliminar {currentPage === 'pets' ? 'esta mascota' : 'este propietario'}?
           </p>
           <div className="flex justify-end space-x-3">
             <button
@@ -540,8 +582,6 @@ function App() {
         <LoginForm 
           onLoginSuccess={() => {
             setIsLoggedIn(true);
-            // Opcional: Recargar los datos al iniciar sesión
-            window.location.reload();
           }} 
         />
       )}
