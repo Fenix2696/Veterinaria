@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import dashboardGif from './assets/images/dashboard.gif';
 
+// Constantes
 const API_URL = 'https://proyecto-veterinaria-uf7y.onrender.com/api';
 
 const LoginForm = ({ onLoginSuccess }) => {
@@ -16,79 +18,37 @@ const LoginForm = ({ onLoginSuccess }) => {
     setLoading(true);
     setError('');
 
-    // Debug: Mostrar información de la solicitud
-    console.log('Enviando solicitud al servidor:', {
-      url: `${API_URL}/auth/login`,
-      method: 'POST',
-      credentials: {
-        email: credentials.email,
-        passwordLength: credentials.password?.length || 0
-      }
-    });
-
     try {
-      const fetchOptions = {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           email: credentials.email.trim(),
           password: credentials.password
         })
-      };
-
-      // Debug: Mostrar opciones de fetch
-      console.log('Opciones de fetch:', {
-        ...fetchOptions,
-        body: '***HIDDEN***'
       });
-
-      const response = await fetch(`${API_URL}/auth/login`, fetchOptions);
       
-      // Debug: Mostrar información de la respuesta
-      console.log('Respuesta inicial del servidor:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      });
-
-      let data;
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-        console.log('Respuesta JSON:', data);
-      } else {
-        const textResponse = await response.text();
-        console.log('Respuesta texto:', textResponse);
-        throw new Error(`Respuesta no JSON: ${textResponse}`);
-      }
-
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error(data.message || `Error del servidor: ${response.status}`);
+        throw new Error(data.message || 'Error de autenticación');
       }
 
-      if (!data.token) {
-        throw new Error('No se recibió token de autenticación');
+      if (!data.success || !data.data?.token) {
+        throw new Error('Error en la respuesta del servidor');
       }
 
-      // Login exitoso
-      localStorage.setItem('token', data.token);
-      console.log('Login exitoso, token almacenado');
+      localStorage.setItem('token', data.data.token);
       onLoginSuccess();
 
     } catch (error) {
-      console.error('Error detallado:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      
+      console.error('Error en login:', error);
       setError(
-        error.message === 'Failed to fetch' 
-          ? 'Error de conexión con el servidor. Por favor, verifica tu conexión a internet.'
-          : error.message || 'Error durante el inicio de sesión'
+        error.message === 'Failed to fetch'
+          ? 'Error de conexión con el servidor'
+          : error.message
       );
     } finally {
       setLoading(false);
@@ -148,6 +108,12 @@ const LoginForm = ({ onLoginSuccess }) => {
               'Iniciar Sesión'
             )}
           </button>
+
+          <div className="text-sm text-center mt-4 text-gray-600">
+            <p>Credenciales de prueba:</p>
+            <p>Email: admin@veterinaria.com</p>
+            <p>Contraseña: admin123</p>
+          </div>
         </form>
       </div>
     </div>
@@ -168,7 +134,6 @@ const Dashboard = ({ onLogout }) => {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        console.log('No se encontró token');
         onLogout();
         return;
       }
@@ -199,18 +164,16 @@ const Dashboard = ({ onLogout }) => {
 
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {
+            onLogout();
             throw new Error('Sesión expirada');
           }
           throw new Error(`Error al cargar ${currentPage}`);
         }
 
         const data = await response.json();
-        setData(Array.isArray(data) ? data : []);
+        setData(Array.isArray(data.data) ? data.data : []);
       } catch (err) {
-        console.error('Error al cargar datos:', err);
-        if (err.message === 'Sesión expirada') {
-          onLogout();
-        }
+        console.error('Error:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -319,8 +282,20 @@ const Dashboard = ({ onLogout }) => {
       default:
         return (
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800">Bienvenido al Sistema Veterinario</h2>
-            <p className="mt-2 text-gray-600">Selecciona una opción del menú para comenzar.</p>
+            <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
+              Bienvenido al Sistema Veterinario
+            </h2>
+            <div className="flex flex-col items-center">
+              <img
+                src={dashboardGif}
+                alt="Bienvenida Veterinaria"
+                className="rounded-lg shadow-lg max-w-xl w-full mb-6 object-cover"
+                style={{ maxHeight: '400px' }}
+              />
+              <p className="mt-4 text-gray-600 text-center">
+                Sistema integral para la gestión de tu clínica veterinaria
+              </p>
+            </div>
           </div>
         );
     }
@@ -389,7 +364,12 @@ function App() {
             throw new Error('Token inválido');
           }
 
-          setIsLoggedIn(true);
+          const data = await response.json();
+          if (data.success) {
+            setIsLoggedIn(true);
+          } else {
+            throw new Error('Verificación fallida');
+          }
         } catch (error) {
           console.error('Error al verificar token:', error);
           localStorage.removeItem('token');
