@@ -1,41 +1,41 @@
 class Pet {
-    constructor(data) {
-      this.validate(data);
-      
-      this.name = data.name;
-      this.species = data.species;
-      this.age = parseInt(data.age);
-      this.owner = data.owner || null;
-      this.createdAt = data.createdAt || new Date();
-      this.updatedAt = data.updatedAt || new Date();
-      this.createdBy = data.createdBy;
-      this.updatedBy = data.updatedBy;
+  constructor(data) {
+    this.validate(data);
+    
+    this.name = data.name.trim();
+    this.species = data.species.trim();
+    this.age = parseInt(data.age);
+    this.owner = data.owner || null;
+    this.createdAt = data.createdAt || new Date();
+    this.updatedAt = data.updatedAt || new Date();
+    this.createdBy = data.createdBy;
+    this.updatedBy = data.updatedBy;
+  }
+
+  validate(data) {
+    if (!data.name?.trim()) {
+      throw new Error('El nombre de la mascota es requerido');
     }
-  
-    validate(data) {
-      if (!data.name || typeof data.name !== 'string') {
-        throw new Error('Nombre de mascota inválido');
-      }
-      if (!data.species || typeof data.species !== 'string') {
-        throw new Error('Especie inválida');
-      }
-      if (!data.age || isNaN(parseInt(data.age))) {
-        throw new Error('Edad inválida');
-      }
+    if (!data.species?.trim()) {
+      throw new Error('La especie es requerida');
     }
-  
-    toJSON() {
-      return {
-        name: this.name,
-        species: this.species,
-        age: this.age,
-        owner: this.owner,
-        createdAt: this.createdAt,
-        updatedAt: this.updatedAt,
-        createdBy: this.createdBy,
-        updatedBy: this.updatedBy
-      };
+    if (!data.age || isNaN(parseInt(data.age))) {
+      throw new Error('La edad debe ser un número válido');
     }
   }
-  
-  module.exports = Pet;
+
+  toJSON() {
+    return {
+      name: this.name,
+      species: this.species,
+      age: this.age,
+      owner: this.owner,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      createdBy: this.createdBy,
+      updatedBy: this.updatedBy
+    };
+  }
+}
+
+module.exports = Pet;

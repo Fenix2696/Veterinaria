@@ -14,11 +14,19 @@ const PetForm = ({ pet, onSubmit, onClose }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
+  
     try {
-      await onSubmit(formData);
+      if (!formData.name || !formData.species || !formData.age) {
+        throw new Error('Todos los campos son requeridos');
+      }
+  
+      await onSubmit({
+        ...formData,
+        age: parseInt(formData.age)
+      });
     } catch (err) {
-      setError(err.message);
+      console.error('Error en el formulario:', err);
+      setError(err.message || 'Error al procesar el formulario');
     } finally {
       setLoading(false);
     }

@@ -17,7 +17,7 @@ const PetList = () => {
     setLoading(true);
     setError('');
     const token = localStorage.getItem('token');
-
+  
     try {
       const response = await fetch(`${API_URL}/pets`, {
         headers: {
@@ -25,23 +25,25 @@ const PetList = () => {
           'Content-Type': 'application/json'
         }
       });
-
-      if (!response.ok) {
-        throw new Error('Error al cargar mascotas');
-      }
-
+  
       const data = await response.json();
-      setPets(Array.isArray(data) ? data : []);
+  
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al cargar mascotas');
+      }
+  
+      if (!data.success) {
+        throw new Error(data.message || 'Error al obtener los datos');
+      }
+  
+      setPets(Array.isArray(data.data) ? data.data : []);
     } catch (err) {
+      console.error('Error al cargar mascotas:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchPets();
-  }, []);
 
   const handleCreate = async (formData) => {
     const token = localStorage.getItem('token');
