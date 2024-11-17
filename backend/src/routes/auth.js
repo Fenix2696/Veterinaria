@@ -2,37 +2,36 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { validateEmail } = require('../utils/validations');
-const { logError, logInfo } = require('../utils/logger');
-const { successResponse, errorResponse } = require('../utils/responses');
 
 function configureAuthRoutes(usersCollection) {
-  // Login
   router.post('/login', async (req, res) => {
     try {
       const { email, password } = req.body;
 
       // Validación básica
       if (!email || !password) {
-        return errorResponse(res, 'Email y contraseña son requeridos', 400);
-      }
-
-      if (!validateEmail(email)) {
-        return errorResponse(res, 'Email inválido', 400);
+        return res.status(400).json({
+          success: false,
+          message: 'Email y contraseña son requeridos'
+        });
       }
 
       // Buscar usuario
       const user = await usersCollection.findOne({ email: email.toLowerCase() });
       if (!user) {
-        logInfo('Intento de login fallido - Usuario no encontrado', { email });
-        return errorResponse(res, 'Credenciales inválidas', 401);
+        return res.status(401).json({
+          success: false,
+          message: 'Credenciales inválidas'
+        });
       }
 
       // Verificar contraseña
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        logInfo('Intento de login fallido - Contraseña incorrecta', { email });
-        return errorResponse(res, 'Credenciales inválidas', 401);
+        return res.status(401).json({
+          success: false,
+          message: 'Credenciales inválidas'
+        });
       }
 
       // Generar token
@@ -46,58 +45,65 @@ function configureAuthRoutes(usersCollection) {
         { expiresIn: '24h' }
       );
 
-      logInfo('Login exitoso', { email });
-      
-      return successResponse(res, {
-        token,
-        user: {
-          email: user.email,
-          role: user.role
+      // Respuesta exitosa
+      return res.status(200).json({
+        success: true,
+        message: 'Login exitoso',
+        data: {
+          token,
+          user: {
+            email: user.email,
+            role: user.role
+          }
         }
-      }, 'Login exitoso');
+      });
 
     } catch (error) {
-      logError(error);
-      return errorResponse(res, 'Error en el servidor', 500, error);
+      console.error('Error en login:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor'
+      });
     }
   });
 
-  // Verificar token
+  // Verificación de token
   router.get('/verify', async (req, res) => {
     try {
       const token = req.headers.authorization?.split(' ')[1];
       
       if (!token) {
-        return errorResponse(res, 'Token no proporcionado', 401);
+        return res.status(401).json({
+          success: false,
+          message: 'Token no proporcionado'
+        });
       }
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await usersCollection.findOne(
-        { _id: decoded.userId },
-        { projection: { password: 0 } }
-      );
+      const user = await usersCollection.findOne({ _id: decoded.userId });
 
       if (!user) {
-        return errorResponse(res, 'Usuario no encontrado', 401);
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no encontrado'
+        });
       }
 
-      return successResponse(res, {
-        user: {
-          email: user.email,
-          role: user.role
+      res.json({
+        success: true,
+        data: {
+          user: {
+            email: user.email,
+            role: user.role
+          }
         }
       });
 
     } catch (error) {
-      if (error.name === 'JsonWebTokenError') {
-        return errorResponse(res, 'Token inválido', 401);
-      }
-      if (error.name === 'TokenExpiredError') {
-        return errorResponse(res, 'Token expirado', 401);
-      }
-      
-      logError(error);
-      return errorResponse(res, 'Error en la verificación', 500, error);
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido o expirado'
+      });
     }
   });
 
