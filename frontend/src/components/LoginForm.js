@@ -1,12 +1,5 @@
-import React, { useState } from 'react';
-
-import React, { useState } from 'react';
-
 const LoginForm = ({ onLoginSuccess }) => {
-  const [credentials, setCredentials] = useState({
-    email: 'admin@veterinaria.com',
-    password: 'admin123'
-  });
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -14,43 +7,46 @@ const LoginForm = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    console.log('Attempting login with:', {
-      url: 'https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login',
-      credentials
-    });
 
     try {
+      console.log('Iniciando intento de login con:', credentials.email);
+      
       const response = await fetch('https://proyecto-veterinaria-uf7y.onrender.com/api/auth/login', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
         },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify({
+          email: credentials.email.trim(),
+          password: credentials.password
+        }),
         credentials: 'include'
       });
-      
-      console.log('Response status:', response.status); // Debug
-      
+
+      console.log('Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText
+      });
+
       const data = await response.json();
-      console.log('Response data:', data); // Debug
-      
-      if (response.ok) {
+      console.log('Datos de respuesta:', {
+        success: data.success,
+        hasToken: !!data.token
+      });
+
+      if (response.ok && data.token) {
         localStorage.setItem('token', data.token);
-        console.log('Token guardado:', data.token); // Debug
         onLoginSuccess();
       } else {
-        setError(data.message || 'Credenciales inválidas');
+        throw new Error(data.message || 'Error en la autenticación');
       }
     } catch (error) {
       console.error('Error completo:', error);
-      setError('Error de conexión al servidor');
+      setError(error.message || 'Error al intentar iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
-
-  // ... resto del código ...
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600">
@@ -110,5 +106,3 @@ const LoginForm = ({ onLoginSuccess }) => {
     </div>
   );
 };
-
-export default LoginForm;

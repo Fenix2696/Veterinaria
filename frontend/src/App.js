@@ -4,7 +4,10 @@ import './App.css';
 const API_URL = 'https://proyecto-veterinaria-uf7y.onrender.com/api';
 
 const LoginForm = ({ onLoginSuccess }) => {
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  const [credentials, setCredentials] = useState({ 
+    email: '', 
+    password: '' 
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -12,40 +15,81 @@ const LoginForm = ({ onLoginSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
+    // Debug: Mostrar información de la solicitud
+    console.log('Enviando solicitud al servidor:', {
+      url: `${API_URL}/auth/login`,
+      method: 'POST',
+      credentials: {
+        email: credentials.email,
+        passwordLength: credentials.password?.length || 0
+      }
+    });
+
     try {
-      console.log('Iniciando intento de login:', { email: credentials.email });
-
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const fetchOptions = {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(credentials)
-      });
-      
-      console.log('Respuesta recibida:', {
-        status: response.status,
-        statusText: response.statusText
+        body: JSON.stringify({
+          email: credentials.email.trim(),
+          password: credentials.password
+        })
+      };
+
+      // Debug: Mostrar opciones de fetch
+      console.log('Opciones de fetch:', {
+        ...fetchOptions,
+        body: '***HIDDEN***'
       });
 
-      const data = await response.json();
+      const response = await fetch(`${API_URL}/auth/login`, fetchOptions);
       
+      // Debug: Mostrar información de la respuesta
+      console.log('Respuesta inicial del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+        console.log('Respuesta JSON:', data);
+      } else {
+        const textResponse = await response.text();
+        console.log('Respuesta texto:', textResponse);
+        throw new Error(`Respuesta no JSON: ${textResponse}`);
+      }
+
       if (!response.ok) {
-        throw new Error(data.message || 'Error durante el inicio de sesión');
+        throw new Error(data.message || `Error del servidor: ${response.status}`);
       }
 
       if (!data.token) {
-        throw new Error('No se recibió token del servidor');
+        throw new Error('No se recibió token de autenticación');
       }
 
-      console.log('Login exitoso');
+      // Login exitoso
       localStorage.setItem('token', data.token);
+      console.log('Login exitoso, token almacenado');
       onLoginSuccess();
-      
+
     } catch (error) {
-      console.error('Error durante el login:', error);
-      setError(error.message || 'Error de conexión. Por favor, intente más tarde.');
+      console.error('Error detallado:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      setError(
+        error.message === 'Failed to fetch' 
+          ? 'Error de conexión con el servidor. Por favor, verifica tu conexión a internet.'
+          : error.message || 'Error durante el inicio de sesión'
+      );
     } finally {
       setLoading(false);
     }
