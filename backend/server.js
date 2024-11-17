@@ -79,59 +79,58 @@ MongoClient.connect(mongoUri, {
   serverSelectionTimeoutMS: 5000,
   connectTimeoutMS: 10000,
 })
-.then(client => {
-  console.log('Connected to MongoDB');
-  db = client.db(dbName);
-  
-  // Inicializar colecciones
-  usersCollection = db.collection('users');
-  petsCollection = db.collection('pets');
-  ownersCollection = db.collection('owners');
-  
-  // Configurar índices importantes
-  Promise.all([
-    usersCollection.createIndex({ email: 1 }, { unique: true }),
-    petsCollection.createIndex({ name: 1 }),
-    ownersCollection.createIndex({ email: 1 }, { unique: true })
-  ]).then(() => {
+  .then(client => {
+    console.log('Connected to MongoDB');
+    db = client.db(dbName);
+
+    // Inicializar colecciones
+    usersCollection = db.collection('users');
+    petsCollection = db.collection('pets');
+    ownersCollection = db.collection('owners');
+
+    // Configurar índices importantes
+    return Promise.all([
+      usersCollection.createIndex({ email: 1 }, { unique: true }),
+      petsCollection.createIndex({ name: 1 }),
+      ownersCollection.createIndex({ email: 1 }, { unique: true })
+    ]);
+  })
+  .then(() => {
     console.log('Database indexes created successfully');
-  }).catch(err => {
-    console.error('Error creating indexes:', err);
-  });
-  
-  // Configurar rutas
-  const authRoutes = require('./src/routes/auth')(usersCollection);
-  const petsRoutes = require('./src/routes/pets')(petsCollection);
-  const ownersRoutes = require('./src/routes/owners')(ownersCollection);
 
-  // Aplicar rutas con sus prefijos
-  app.use('/api/auth', authRoutes);
-  app.use('/api/pets', authenticateToken, petsRoutes);
-  app.use('/api/owners', authenticateToken, ownersRoutes);
+    // Configurar rutas
+    const authRoutes = require('./src/routes/auth')(usersCollection);
+    const petsRoutes = require('./src/routes/pets')(petsCollection);
+    const ownersRoutes = require('./src/routes/owners')(ownersCollection);
 
-  // Ruta para servir la aplicación React en producción
-  if (process.env.NODE_ENV === 'production') {
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    // Aplicar rutas con sus prefijos
+    app.use('/api/auth', authRoutes);
+    app.use('/api/pets', authenticateToken, petsRoutes);
+    app.use('/api/owners', authenticateToken, ownersRoutes);
+
+    // Ruta para servir la aplicación React en producción
+    if (process.env.NODE_ENV === 'production') {
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      });
+    }
+
+    // Iniciar servidor
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Server running on port ${port}`);
+      console.log('Environment:', process.env.NODE_ENV);
+      console.log('MongoDB Connected to:', dbName);
     });
-  }
-
-  // Iniciar servidor
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`Server running on port ${port}`);
-    console.log('Environment:', process.env.NODE_ENV);
-    console.log('MongoDB Connected to:', dbName);
+  })
+  .catch(error => {
+    console.error('Error connecting to MongoDB:', error);
+    process.exit(1); // Salir si no podemos conectar a la base de datos
   });
-})
-.catch(error => {
-  console.error('Error connecting to MongoDB:', error);
-  process.exit(1); // Salir si no podemos conectar a la base de datos
-});
 
 // Middleware de manejo de errores global
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
-  
+
   // Errores de MongoDB
   if (err.name === 'MongoError' || err.name === 'MongoServerError') {
     if (err.code === 11000) {
@@ -141,7 +140,7 @@ app.use((err, req, res, next) => {
       });
     }
   }
-  
+
   // Error general
   res.status(err.status || 500).json({
     message: err.message || 'Error interno del servidor',
@@ -158,7 +157,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // Manejo de excepciones no capturadas
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  // En producción deberías cerrar el servidor gracefully
+  // En producción deberías cerrar el servidor gracefuly
   if (process.env.NODE_ENV === 'production') {
     console.log('Cerrando el servidor debido a una excepción no capturada');
     process.exit(1);
