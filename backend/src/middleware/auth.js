@@ -3,18 +3,18 @@ const { logError } = require('../utils/logger');
 
 const authenticateToken = async (req, res, next) => {
     try {
-        // Obtener el token del header
         const authHeader = req.headers.authorization;
         
         if (!authHeader) {
+            console.log('No se encontró header de autorización');
             return res.status(401).json({
                 success: false,
                 message: 'No se proporcionó token de acceso'
             });
         }
 
-        // Verificar formato del token (Bearer token)
         if (!authHeader.startsWith('Bearer ')) {
+            console.log('Formato de token incorrecto');
             return res.status(401).json({
                 success: false,
                 message: 'Formato de token inválido'
@@ -24,6 +24,7 @@ const authenticateToken = async (req, res, next) => {
         const token = authHeader.split(' ')[1];
 
         if (!token) {
+            console.log('Token vacío');
             return res.status(401).json({
                 success: false,
                 message: 'Token no proporcionado'
@@ -31,23 +32,20 @@ const authenticateToken = async (req, res, next) => {
         }
 
         try {
-            // Verificar y decodificar el token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             
-            // Añadir información del usuario decodificada a la request
             req.user = {
                 userId: decoded.userId,
                 email: decoded.email,
-                role: decoded.role
+                role: decoded.role || 'user' // Asegurar que siempre haya un rol
             };
 
-            // Log de acceso exitoso (opcional)
-            console.log(`Usuario autenticado: ${decoded.email}`);
+            console.log(`Usuario autenticado: ${decoded.email} (${decoded.role})`);
             
             next();
         } catch (tokenError) {
-            // Manejar diferentes tipos de errores de token
             if (tokenError.name === 'TokenExpiredError') {
+                console.log('Token expirado');
                 return res.status(401).json({
                     success: false,
                     message: 'Token expirado'
@@ -55,20 +53,18 @@ const authenticateToken = async (req, res, next) => {
             }
             
             if (tokenError.name === 'JsonWebTokenError') {
+                console.log('Token inválido');
                 return res.status(401).json({
                     success: false,
                     message: 'Token inválido'
                 });
             }
 
-            throw tokenError; // Otros errores inesperados
+            throw tokenError;
         }
     } catch (error) {
-        // Log del error para debugging
         logError(error);
         console.error('Error en autenticación:', error);
-
-        // Respuesta genérica para errores no esperados
         return res.status(500).json({
             success: false,
             message: 'Error en la autenticación',
@@ -77,28 +73,77 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-// Middleware opcional para verificar roles
+// Middleware mejorado para verificar roles
 const authorizeRole = (allowedRoles) => {
     return (req, res, next) => {
-        if (!req.user || !req.user.role) {
-            return res.status(403).json({
+        try {
+            if (!req.user) {
+                console.log('No se encontró información del usuario');
+                return res.status(403).json({
+                    success: false,
+                    message: 'Acceso denegado: usuario no autenticado'
+                });
+            }
+
+            const userRole = req.user.role || 'user';
+
+            if (!allowedRoles.includes(userRole)) {
+                console.log(`Acceso denegado para el rol: ${userRole}`);
+                return res.status(403).json({
+                    success: false,
+                    message: 'Acceso denegado: rol no autorizado'
+                });
+            }
+
+            console.log(`Acceso autorizado para rol: ${userRole}`);
+            next();
+        } catch (error) {
+            logError(error);
+            console.error('Error en autorización:', error);
+            return res.status(500).json({
                 success: false,
-                message: 'Acceso denegado: rol no especificado'
+                message: 'Error en la autorización',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
             });
         }
+    };
+};
 
-        if (!allowedRoles.includes(req.user.role)) {
-            return res.status(403).json({
+// Nuevo middleware para verificar permisos específicos
+const checkPermission = (requiredPermission) => {
+    return (req, res, next) => {
+        try {
+            const userRole = req.user?.role || 'user';
+            
+            // Define los permisos por rol
+            const rolePermissions = {
+                admin: ['read', 'write', 'delete', 'manage'],
+                user: ['read']
+            };
+
+            const userPermissions = rolePermissions[userRole] || [];
+
+            if (!userPermissions.includes(requiredPermission)) {
+                console.log(`Permiso denegado: ${requiredPermission} para rol ${userRole}`);
+                return res.status(403).json({
+                    success: false,
+                    message: 'Permiso denegado'
+                });
+            }
+
+            next();
+        } catch (error) {
+            logError(error);
+            return res.status(500).json({
                 success: false,
-                message: 'Acceso denegado: rol no autorizado'
+                message: 'Error al verificar permisos'
             });
         }
-
-        next();
     };
 };
 
 module.exports = {
     authenticateToken,
-    authorizeRole
+    authorizeRole,
+    checkPermission
 };
