@@ -1,4 +1,3 @@
-// src/components/ItemForm.js
 import React, { useState } from 'react';
 
 const ItemForm = ({ item, onSubmit, onClose }) => {
@@ -19,14 +18,10 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
 
     try {
       if (!formData.name || !formData.quantity || !formData.price) {
-        throw new Error('Los campos nombre, cantidad y precio son requeridos');
+        throw new Error('Todos los campos son requeridos');
       }
 
-      await onSubmit({
-        ...formData,
-        quantity: parseInt(formData.quantity),
-        price: parseFloat(formData.price)
-      });
+      await onSubmit(formData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -122,3 +117,4 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
   );
 };
 
+export default ItemForm;
