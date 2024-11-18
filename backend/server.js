@@ -107,12 +107,16 @@ MongoClient.connect(mongoUri, {
     app.use('/api/veterinarians', veterinariansRoutes);
 
     // Ruta catch-all para servir la aplicación React en producción
-    if (process.env.NODE_ENV === 'production') {
-        app.get('*', (req, res) => {
-            res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-        });
-    }
+    app.get('*', (req, res) => {
+      try {
+        res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      } catch (error) {
+        console.error('Error serving index.html:', error);
+        res.status(500).send('Error interno del servidor');
+      }
+    });
 
+    
     // Iniciar servidor
     app.listen(port, '0.0.0.0', () => {
         console.log(`Server running on port ${port}`);
