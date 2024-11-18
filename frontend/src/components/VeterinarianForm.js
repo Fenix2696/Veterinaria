@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
     const [formData, setFormData] = useState({
-        name: veterinarian?.name || '',
-        email: veterinarian?.email || '',
-        phone: veterinarian?.phone || '',
-        specialty: veterinarian?.specialty || 'General',
-        license: veterinarian?.license || ''
+        name: '',
+        email: '',
+        phone: '',
+        specialty: 'General',
+        license: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (veterinarian) {
+            setFormData({
+                name: veterinarian.name || '',
+                email: veterinarian.email || '',
+                phone: veterinarian.phone || '',
+                specialty: veterinarian.specialty || 'General',
+                license: veterinarian.license || ''
+            });
+        }
+    }, [veterinarian]);
 
     const validateForm = () => {
         if (!formData.name.trim()) {
@@ -38,7 +50,8 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
                 email: formData.email.toLowerCase(),
                 name: formData.name.trim(),
                 license: formData.license.trim(),
-                phone: formData.phone.trim()
+                phone: formData.phone.trim(),
+                specialty: formData.specialty.trim()
             };
             await onSubmit(normalizedData);
         } catch (err) {
@@ -49,8 +62,24 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
 
     const handlePhoneChange = (e) => {
         const value = e.target.value.replace(/[^0-9+()-]/g, '');
-        setFormData({ ...formData, phone: value });
+        if (value.length <= 15) {
+            setFormData({ ...formData, phone: value });
+        }
     };
+
+    const specialties = [
+        'General',
+        'Cirugía',
+        'Dermatología',
+        'Cardiología',
+        'Oftalmología',
+        'Ortopedia',
+        'Neurología',
+        'Odontología',
+        'Nutrición',
+        'Medicina Interna',
+        'Oncología'
+    ];
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,6 +100,7 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                     maxLength={100}
+                    placeholder="Nombre completo"
                 />
             </div>
 
@@ -84,6 +114,7 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
+                    placeholder="correo@ejemplo.com"
                 />
             </div>
 
@@ -97,27 +128,27 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
                     onChange={handlePhoneChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
-                    placeholder="Ej: +1234567890"
+                    placeholder="+1234567890"
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                    Solo números y los caracteres +()-
+                    Solo números y los caracteres: + ( ) -
                 </p>
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">Especialidad</label>
+                <label className="block text-sm font-medium text-gray-700">
+                    Especialidad
+                </label>
                 <select
                     value={formData.specialty}
                     onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
-                    <option value="General">General</option>
-                    <option value="Cirugía">Cirugía</option>
-                    <option value="Dermatología">Dermatología</option>
-                    <option value="Cardiología">Cardiología</option>
-                    <option value="Oftalmología">Oftalmología</option>
-                    <option value="Ortopedia">Ortopedia</option>
-                    <option value="Neurología">Neurología</option>
+                    {specialties.map((specialty) => (
+                        <option key={specialty} value={specialty}>
+                            {specialty}
+                        </option>
+                    ))}
                 </select>
             </div>
 
@@ -132,6 +163,7 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
                     maxLength={50}
+                    placeholder="Ejemplo: VET-12345"
                 />
             </div>
 
@@ -139,14 +171,14 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
                 <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
                 >
                     Cancelar
                 </button>
                 <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 transition-colors duration-200"
                 >
                     {loading ? 'Guardando...' : veterinarian ? 'Actualizar' : 'Crear'}
                 </button>

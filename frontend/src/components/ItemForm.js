@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ItemForm = ({ item, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
-    name: item?.name || '',
-    description: item?.description || '',
-    quantity: item?.quantity || 0,
-    price: item?.price || 0,
-    category: item?.category || 'General'
+    name: '',
+    description: '',
+    quantity: 0,
+    price: 0,
+    category: 'General'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (item) {
+      setFormData({
+        name: item.name || '',
+        description: item.description || '',
+        quantity: item.quantity || 0,
+        price: item.price || 0,
+        category: item.category || 'General'
+      });
+    }
+  }, [item]);
 
   const validateForm = () => {
     if (!formData.name.trim()) {
@@ -57,6 +69,18 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
     }
   };
 
+  const categories = [
+    'General',
+    'Medicamentos',
+    'Alimentos',
+    'Accesorios',
+    'Higiene',
+    'Equipamiento',
+    'Suplementos',
+    'Juguetes',
+    'Cuidado Dental'
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -76,6 +100,7 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           required
           maxLength={100}
+          placeholder="Nombre del producto"
         />
       </div>
 
@@ -87,7 +112,11 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           rows="3"
           maxLength={500}
+          placeholder="Descripción detallada del producto"
         />
+        <p className="mt-1 text-sm text-gray-500">
+          {formData.description.length}/500 caracteres
+        </p>
       </div>
 
       <div>
@@ -102,7 +131,11 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
           required
           min="0"
           step="1"
+          placeholder="0"
         />
+        <p className="mt-1 text-sm text-gray-500">
+          Cantidad disponible en inventario
+        </p>
       </div>
 
       <div>
@@ -121,8 +154,12 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
             required
             min="0"
             step="0.01"
+            placeholder="0.00"
           />
         </div>
+        <p className="mt-1 text-sm text-gray-500">
+          Precio unitario del producto
+        </p>
       </div>
 
       <div>
@@ -132,12 +169,11 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
         >
-          <option value="General">General</option>
-          <option value="Medicamentos">Medicamentos</option>
-          <option value="Alimentos">Alimentos</option>
-          <option value="Accesorios">Accesorios</option>
-          <option value="Higiene">Higiene</option>
-          <option value="Equipamiento">Equipamiento</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -145,14 +181,14 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 transition-colors duration-200"
         >
           {loading ? 'Guardando...' : item ? 'Actualizar' : 'Crear'}
         </button>
