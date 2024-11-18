@@ -16,7 +16,7 @@ if (missingEnvVars.length > 0) {
 }
 
 // Configuración de variables de entorno
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 10000;
 const mongoUri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB;
 
@@ -32,7 +32,14 @@ app.use(cors({
 
 // Middleware para parsear JSON y servir archivos estáticos
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, 'dist'), {
+    maxAge: '1h',
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
 
 // Variables globales para las colecciones de MongoDB
 let db;
@@ -106,16 +113,27 @@ MongoClient.connect(mongoUri, {
     app.use('/api/items', itemsRoutes);
     app.use('/api/veterinarians', veterinariansRoutes);
 
-    // Ruta catch-all para servir la aplicación React en producción
-    app.get('*', (req, res) => {
-      try {
-        res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-      } catch (error) {
-        console.error('Error serving index.html:', error);
-        res.status(500).send('Error interno del servidor');
-      }
+    // Manejo de rutas API no encontradas
+    app.all('/api/*', (req, res) => {
+        res.status(404).json({
+            success: false,
+            message: 'API endpoint not found'
+        });
     });
 
+    // Ruta catch-all para servir la aplicación React en producción
+    app.get('*', (req, res) => {
+        try {
+            res.sendFile(path.join(__dirname, 'dist', 'index.html'), {
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            });
+        } catch (error) {
+            console.error('Error serving index.html:', error);
+            res.status(500).send('Error interno del servidor');
+        }
+    });
     
     // Iniciar servidor
     app.listen(port, '0.0.0.0', () => {

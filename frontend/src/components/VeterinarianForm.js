@@ -11,22 +11,45 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    const validateForm = () => {
+        if (!formData.name.trim()) {
+            throw new Error('El nombre del veterinario es requerido');
+        }
+        if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            throw new Error('Email inválido');
+        }
+        if (!formData.phone.trim() || formData.phone.length < 8) {
+            throw new Error('Teléfono inválido - mínimo 8 dígitos');
+        }
+        if (!formData.license.trim()) {
+            throw new Error('El número de licencia es requerido');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
-            if (!formData.name || !formData.email || !formData.phone || !formData.license) {
-                throw new Error('Todos los campos son requeridos');
-            }
-
-            await onSubmit(formData);
+            validateForm();
+            const normalizedData = {
+                ...formData,
+                email: formData.email.toLowerCase(),
+                name: formData.name.trim(),
+                license: formData.license.trim(),
+                phone: formData.phone.trim()
+            };
+            await onSubmit(normalizedData);
         } catch (err) {
             setError(err.message);
-        } finally {
             setLoading(false);
         }
+    };
+
+    const handlePhoneChange = (e) => {
+        const value = e.target.value.replace(/[^0-9+()-]/g, '');
+        setFormData({ ...formData, phone: value });
     };
 
     return (
@@ -38,18 +61,23 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
             )}
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">Nombre</label>
+                <label className="block text-sm font-medium text-gray-700">
+                    Nombre <span className="text-red-500">*</span>
+                </label>
                 <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
+                    maxLength={100}
                 />
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <label className="block text-sm font-medium text-gray-700">
+                    Email <span className="text-red-500">*</span>
+                </label>
                 <input
                     type="email"
                     value={formData.email}
@@ -60,14 +88,20 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+                <label className="block text-sm font-medium text-gray-700">
+                    Teléfono <span className="text-red-500">*</span>
+                </label>
                 <input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={handlePhoneChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
+                    placeholder="Ej: +1234567890"
                 />
+                <p className="mt-1 text-sm text-gray-500">
+                    Solo números y los caracteres +()-
+                </p>
             </div>
 
             <div>
@@ -82,17 +116,22 @@ const VeterinarianForm = ({ veterinarian, onSubmit, onClose }) => {
                     <option value="Dermatología">Dermatología</option>
                     <option value="Cardiología">Cardiología</option>
                     <option value="Oftalmología">Oftalmología</option>
+                    <option value="Ortopedia">Ortopedia</option>
+                    <option value="Neurología">Neurología</option>
                 </select>
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700">Número de Licencia</label>
+                <label className="block text-sm font-medium text-gray-700">
+                    Número de Licencia <span className="text-red-500">*</span>
+                </label>
                 <input
                     type="text"
                     value={formData.license}
                     onChange={(e) => setFormData({ ...formData, license: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     required
+                    maxLength={50}
                 />
             </div>
 

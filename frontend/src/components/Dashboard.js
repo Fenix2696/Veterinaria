@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import PetForm from './PetForm';
 import OwnerForm from './OwnerForm';
-// Importar el GIF local
+import ItemForm from './ItemForm';
+import VeterinarianForm from './VeterinarianForm';
 import dashboardGif from '../assets/images/dashboard.gif';
 
 const API_URL = 'https://proyecto-veterinaria-uf7y.onrender.com/api';
@@ -12,15 +13,14 @@ const Dashboard = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [pets, setPets] = useState([]);
   const [owners, setOwners] = useState([]);
+  const [items, setItems] = useState([]);
+  const [veterinarians, setVeterinarians] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [items, setItems] = useState([]);
-  const [veterinarians, setVeterinarians] = useState([]);
-
 
   // Efecto para verificar autenticación
   useEffect(() => {
@@ -95,6 +95,141 @@ const Dashboard = ({ onLogout }) => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Función para crear nuevo item
+  const handleCreate = async (formData) => {
+    const token = localStorage.getItem('token');
+    let endpoint = '';
+    
+    switch(currentPage) {
+      case 'pets':
+        endpoint = '/pets';
+        break;
+      case 'owners':
+        endpoint = '/owners';
+        break;
+      case 'items':
+        endpoint = '/items';
+        break;
+      case 'veterinarians':
+        endpoint = '/veterinarians';
+        break;
+      default:
+        return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear');
+      }
+
+      fetchData();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err.message);
+    }
+  };
+
+  // Función para actualizar item
+  const handleUpdate = async (formData) => {
+    const token = localStorage.getItem('token');
+    let endpoint = '';
+    
+    switch(currentPage) {
+      case 'pets':
+        endpoint = `/pets/${selectedItem._id}`;
+        break;
+      case 'owners':
+        endpoint = `/owners/${selectedItem._id}`;
+        break;
+      case 'items':
+        endpoint = `/items/${selectedItem._id}`;
+        break;
+      case 'veterinarians':
+        endpoint = `/veterinarians/${selectedItem._id}`;
+        break;
+      default:
+        return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar');
+      }
+
+      fetchData();
+      setIsModalOpen(false);
+      setSelectedItem(null);
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err.message);
+    }
+  };
+
+  // Función para eliminar item
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+
+    const token = localStorage.getItem('token');
+    let endpoint = '';
+    
+    switch(currentPage) {
+      case 'pets':
+        endpoint = `/pets/${itemToDelete._id}`;
+        break;
+      case 'owners':
+        endpoint = `/owners/${itemToDelete._id}`;
+        break;
+      case 'items':
+        endpoint = `/items/${itemToDelete._id}`;
+        break;
+      case 'veterinarians':
+        endpoint = `/veterinarians/${itemToDelete._id}`;
+        break;
+      default:
+        return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar');
+      }
+
+      fetchData();
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err.message);
     }
   };
 
@@ -261,92 +396,175 @@ const Dashboard = ({ onLogout }) => {
     </div>
   );
 
-  // Añadir las nuevas funciones de renderizado:
-const renderItemList = () => (
-  <div className="bg-white shadow rounded-lg p-6">
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-2xl font-bold">Inventario</h2>
-      <button
-        onClick={() => {
-          setSelectedItem(null);
-          setIsModalOpen(true);
-        }}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
-      >
-        Agregar Item
-      </button>
-    </div>
-
-    {loading && (
-      <div className="flex justify-center items-center py-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  const renderItemList = () => (
+    <div className="bg-white shadow rounded-lg p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Inventario</h2>
+        <button
+          onClick={() => {
+            setSelectedItem(null);
+            setIsModalOpen(true);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
+        >
+          Agregar Item
+        </button>
       </div>
-    )}
 
-    {error && (
-      <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4">
-        {error}
-      </div>
-    )}
+      {loading && (
+        <div className="flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      )}
 
-    {!loading && !error && (
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nombre
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cantidad
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Precio
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Categoría
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {items.map((item) => (
-              <tr key={item._id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
-                <td className="px-6 py-4 whitespace-nowrap">${item.price.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{item.category}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => {
-                      setSelectedItem(item);
-                      setIsModalOpen(true);
-                    }}
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setItemToDelete(item);
-                      setIsDeleteModalOpen(true);
-                    }}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Eliminar
-                  </button>
-                </td>
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cantidad
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Precio
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Categoría
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </div>
-);
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {items.map((item) => (
+                <tr key={item._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">${item.price.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{item.category}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setSelectedItem(item);
+                        setIsModalOpen(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setItemToDelete(item);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 
+  const renderVeterinarianList = () => (
+    <div className="bg-white shadow rounded-lg p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Veterinarios</h2>
+        <button
+          onClick={() => {
+            setSelectedItem(null);
+            setIsModalOpen(true);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
+        >
+          Agregar Veterinario
+        </button>
+      </div>
+
+      {loading && (
+        <div className="flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Especialidad
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Teléfono
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {veterinarians.map((vet) => (
+                <tr key={vet._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">{vet.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{vet.specialty}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{vet.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{vet.phone}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setSelectedItem(vet);
+                        setIsModalOpen(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setItemToDelete(vet);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 
   // Renderizado del contenido principal
   const renderContent = () => {
@@ -355,6 +573,10 @@ const renderItemList = () => (
         return renderPetList();
       case 'owners':
         return renderOwnerList();
+      case 'items':
+        return renderItemList();
+      case 'veterinarians':
+        return renderVeterinarianList();
       default:
         return (
           <div className="bg-white shadow rounded-lg p-6">
@@ -470,6 +692,34 @@ const renderItemList = () => (
               </svg>
               Propietarios
             </button>
+
+            <button
+              onClick={() => setCurrentPage('items')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                currentPage === 'items' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              Inventario
+            </button>
+
+            <button
+              onClick={() => setCurrentPage('veterinarians')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                currentPage === 'veterinarians' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Veterinarios
+            </button>
           </nav>
 
           <div className="p-4">
@@ -499,28 +749,61 @@ const renderItemList = () => (
           setSelectedItem(null);
         }}
         title={`${selectedItem ? 'Editar' : 'Agregar'} ${
-          currentPage === 'pets' ? 'Mascota' : 'Propietario'
+          currentPage === 'pets' ? 'Mascota' : 
+          currentPage === 'owners' ? 'Propietario' :
+          currentPage === 'items' ? 'Item' : 'Veterinario'
         }`}
       >
-        {currentPage === 'pets' ? (
-          <PetForm
-            pet={selectedItem}
-            onSubmit={selectedItem ? handleUpdate : handleCreate}
-            onClose={() => {
-              setIsModalOpen(false);
-              setSelectedItem(null);
-            }}
-          />
-        ) : (
-          <OwnerForm
-            owner={selectedItem}
-            onSubmit={selectedItem ? handleUpdate : handleCreate}
-            onClose={() => {
-              setIsModalOpen(false);
-              setSelectedItem(null);
-            }}
-          />
-        )}
+        {(() => {
+          switch(currentPage) {
+            case 'pets':
+              return (
+                <PetForm
+                  pet={selectedItem}
+                  onSubmit={selectedItem ? handleUpdate : handleCreate}
+                  onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                  }}
+                />
+              );
+            case 'owners':
+              return (
+                <OwnerForm
+                  owner={selectedItem}
+                  onSubmit={selectedItem ? handleUpdate : handleCreate}
+                  onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                  }}
+                />
+              );
+            case 'items':
+              return (
+                <ItemForm
+                  item={selectedItem}
+                  onSubmit={selectedItem ? handleUpdate : handleCreate}
+                  onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                  }}
+                />
+              );
+            case 'veterinarians':
+              return (
+                <VeterinarianForm
+                  veterinarian={selectedItem}
+                  onSubmit={selectedItem ? handleUpdate : handleCreate}
+                  onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                  }}
+                />
+              );
+            default:
+              return null;
+          }
+        })()}
       </Modal>
 
       <Modal
@@ -533,7 +816,11 @@ const renderItemList = () => (
       >
         <div className="p-6">
           <p className="mb-6">
-            ¿Estás seguro de que deseas eliminar {currentPage === 'pets' ? 'esta mascota' : 'este propietario'}?
+            ¿Estás seguro de que deseas eliminar {
+              currentPage === 'pets' ? 'esta mascota' : 
+              currentPage === 'owners' ? 'este propietario' :
+              currentPage === 'items' ? 'este item' : 'este veterinario'
+            }?
           </p>
           <div className="flex justify-end space-x-3">
             <button

@@ -4,12 +4,24 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     name: item?.name || '',
     description: item?.description || '',
-    quantity: item?.quantity || '',
-    price: item?.price || '',
+    quantity: item?.quantity || 0,
+    price: item?.price || 0,
     category: item?.category || 'General'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      throw new Error('El nombre del item es requerido');
+    }
+    if (isNaN(formData.quantity) || formData.quantity < 0) {
+      throw new Error('La cantidad debe ser un número válido y no negativo');
+    }
+    if (isNaN(formData.price) || formData.price < 0) {
+      throw new Error('El precio debe ser un número válido y no negativo');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,15 +29,31 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
     setError('');
 
     try {
-      if (!formData.name || !formData.quantity || !formData.price) {
-        throw new Error('Todos los campos son requeridos');
-      }
-
-      await onSubmit(formData);
+      validateForm();
+      const normalizedData = {
+        ...formData,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        quantity: parseInt(formData.quantity),
+        price: parseFloat(formData.price),
+        category: formData.category.trim()
+      };
+      await onSubmit(normalizedData);
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNumberInput = (e, field) => {
+    const value = e.target.value;
+    if (value === '' || value === '-') {
+      setFormData({ ...formData, [field]: value });
+      return;
+    }
+    const num = field === 'price' ? parseFloat(value) : parseInt(value);
+    if (!isNaN(num)) {
+      setFormData({ ...formData, [field]: num });
     }
   };
 
@@ -38,13 +66,16 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Nombre</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Nombre <span className="text-red-500">*</span>
+        </label>
         <input
           type="text"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           required
+          maxLength={100}
         />
       </div>
 
@@ -55,32 +86,43 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           rows="3"
+          maxLength={500}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Cantidad</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Cantidad <span className="text-red-500">*</span>
+        </label>
         <input
           type="number"
           value={formData.quantity}
-          onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+          onChange={(e) => handleNumberInput(e, 'quantity')}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           required
           min="0"
+          step="1"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Precio</label>
-        <input
-          type="number"
-          value={formData.price}
-          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          required
-          min="0"
-          step="0.01"
-        />
+        <label className="block text-sm font-medium text-gray-700">
+          Precio <span className="text-red-500">*</span>
+        </label>
+        <div className="relative mt-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-gray-500">$</span>
+          </div>
+          <input
+            type="number"
+            value={formData.price}
+            onChange={(e) => handleNumberInput(e, 'price')}
+            className="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
+            min="0"
+            step="0.01"
+          />
+        </div>
       </div>
 
       <div>
@@ -94,6 +136,8 @@ const ItemForm = ({ item, onSubmit, onClose }) => {
           <option value="Medicamentos">Medicamentos</option>
           <option value="Alimentos">Alimentos</option>
           <option value="Accesorios">Accesorios</option>
+          <option value="Higiene">Higiene</option>
+          <option value="Equipamiento">Equipamiento</option>
         </select>
       </div>
 
