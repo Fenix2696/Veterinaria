@@ -4,16 +4,18 @@ import dashboardGif from './assets/images/dashboard.gif';
 import Modal from './components/Modal';
 import PetForm from './components/PetForm';
 import OwnerForm from './components/OwnerForm';
+import ItemForm from './components/ItemForm';
+import VeterinarianForm from './components/VeterinarianForm';
 import LoginForm from './components/LoginForm';
 
 const API_URL = 'https://proyecto-veterinaria-uf7y.onrender.com/api';
-
-// Aquí comienza el componente Dashboard...
 
 const Dashboard = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [pets, setPets] = useState([]);
   const [owners, setOwners] = useState([]);
+  const [items, setItems] = useState([]);
+  const [veterinarians, setVeterinarians] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,7 +34,23 @@ const Dashboard = ({ onLogout }) => {
     }
 
     try {
-      let endpoint = currentPage === 'pets' ? '/pets' : '/owners';
+      let endpoint;
+      switch(currentPage) {
+        case 'pets':
+          endpoint = '/pets';
+          break;
+        case 'owners':
+          endpoint = '/owners';
+          break;
+        case 'items':
+          endpoint = '/items';
+          break;
+        case 'veterinarians':
+          endpoint = '/veterinarians';
+          break;
+        default:
+          return;
+      }
       
       const response = await fetch(`${API_URL}${endpoint}`, {
         headers: {
@@ -55,10 +73,19 @@ const Dashboard = ({ onLogout }) => {
         throw new Error(data.message || `Error al cargar ${currentPage}`);
       }
 
-      if (currentPage === 'pets') {
-        setPets(data.data || []);
-      } else {
-        setOwners(data.data || []);
+      switch(currentPage) {
+        case 'pets':
+          setPets(data.data || []);
+          break;
+        case 'owners':
+          setOwners(data.data || []);
+          break;
+        case 'items':
+          setItems(data.data || []);
+          break;
+        case 'veterinarians':
+          setVeterinarians(data.data || []);
+          break;
       }
     } catch (err) {
       console.error('Error:', err);
@@ -77,7 +104,23 @@ const Dashboard = ({ onLogout }) => {
   const handleCreate = async (formData) => {
     try {
       const token = localStorage.getItem('token');
-      const endpoint = currentPage === 'pets' ? '/pets' : '/owners';
+      let endpoint;
+      switch(currentPage) {
+        case 'pets':
+          endpoint = '/pets';
+          break;
+        case 'owners':
+          endpoint = '/owners';
+          break;
+        case 'items':
+          endpoint = '/items';
+          break;
+        case 'veterinarians':
+          endpoint = '/veterinarians';
+          break;
+        default:
+          throw new Error('Página no válida');
+      }
       
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
@@ -105,7 +148,23 @@ const Dashboard = ({ onLogout }) => {
   const handleUpdate = async (formData) => {
     try {
       const token = localStorage.getItem('token');
-      const endpoint = currentPage === 'pets' ? '/pets' : '/owners';
+      let endpoint;
+      switch(currentPage) {
+        case 'pets':
+          endpoint = '/pets';
+          break;
+        case 'owners':
+          endpoint = '/owners';
+          break;
+        case 'items':
+          endpoint = '/items';
+          break;
+        case 'veterinarians':
+          endpoint = '/veterinarians';
+          break;
+        default:
+          throw new Error('Página no válida');
+      }
       
       const response = await fetch(`${API_URL}${endpoint}/${selectedItem._id}`, {
         method: 'PUT',
@@ -134,7 +193,23 @@ const Dashboard = ({ onLogout }) => {
   const handleDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const endpoint = currentPage === 'pets' ? '/pets' : '/owners';
+      let endpoint;
+      switch(currentPage) {
+        case 'pets':
+          endpoint = '/pets';
+          break;
+        case 'owners':
+          endpoint = '/owners';
+          break;
+        case 'items':
+          endpoint = '/items';
+          break;
+        case 'veterinarians':
+          endpoint = '/veterinarians';
+          break;
+        default:
+          throw new Error('Página no válida');
+      }
       
       const response = await fetch(`${API_URL}${endpoint}/${itemToDelete._id}`, {
         method: 'DELETE',
@@ -158,7 +233,6 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
-  // Continúa con renderPetList, renderOwnerList y renderContent...
 
   const renderPetList = () => (
     <div className="bg-white shadow rounded-lg p-6">
@@ -322,12 +396,187 @@ const Dashboard = ({ onLogout }) => {
     </div>
   );
 
+  const renderItemList = () => (
+    <div className="bg-white shadow rounded-lg p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Inventario</h2>
+        <button
+          onClick={() => {
+            setSelectedItem(null);
+            setIsModalOpen(true);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
+        >
+          Agregar Item
+        </button>
+      </div>
+
+      {loading && (
+        <div className="flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cantidad
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Precio
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Categoría
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {items.map((item) => (
+                <tr key={item._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">${item.price.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{item.category}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setSelectedItem(item);
+                        setIsModalOpen(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setItemToDelete(item);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderVeterinarianList = () => (
+    <div className="bg-white shadow rounded-lg p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Veterinarios</h2>
+        <button
+          onClick={() => {
+            setSelectedItem(null);
+            setIsModalOpen(true);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
+        >
+          Agregar Veterinario
+        </button>
+      </div>
+
+      {loading && (
+        <div className="flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Teléfono
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Especialidad
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {veterinarians.map((vet) => (
+                <tr key={vet._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">{vet.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{vet.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{vet.phone}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{vet.specialty}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setSelectedItem(vet);
+                        setIsModalOpen(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setItemToDelete(vet);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+
+
   const renderContent = () => {
     switch(currentPage) {
       case 'pets':
         return renderPetList();
       case 'owners':
         return renderOwnerList();
+      case 'items':
+        return renderItemList();
+      case 'veterinarians':
+        return renderVeterinarianList();
       default:
         return (
           <div className="bg-white shadow rounded-lg p-6">
@@ -345,7 +594,7 @@ const Dashboard = ({ onLogout }) => {
                 <p className="text-xl text-gray-600 mb-8">
                   Sistema integral para la gestión de tu clínica veterinaria
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="transform transition-all duration-300 hover:scale-105">
                     <div className="p-6 bg-blue-50 rounded-xl shadow-md hover:shadow-lg border border-blue-100">
                       <h3 className="text-lg font-semibold text-blue-800 mb-2">
@@ -366,6 +615,26 @@ const Dashboard = ({ onLogout }) => {
                       </p>
                     </div>
                   </div>
+                  <div className="transform transition-all duration-300 hover:scale-105">
+                    <div className="p-6 bg-yellow-50 rounded-xl shadow-md hover:shadow-lg border border-yellow-100">
+                      <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                        Gestión de Inventario
+                      </h3>
+                      <p className="text-yellow-600">
+                        Controla el inventario de productos y medicamentos
+                      </p>
+                    </div>
+                  </div>
+                  <div className="transform transition-all duration-300 hover:scale-105">
+                    <div className="p-6 bg-purple-50 rounded-xl shadow-md hover:shadow-lg border border-purple-100">
+                      <h3 className="text-lg font-semibold text-purple-800 mb-2">
+                        Gestión de Veterinarios
+                      </h3>
+                      <p className="text-purple-600">
+                        Administra el equipo médico de la clínica
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -373,9 +642,6 @@ const Dashboard = ({ onLogout }) => {
         );
     }
   };
-
-  // Continúa con el return del Dashboard...
-
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -430,6 +696,34 @@ const Dashboard = ({ onLogout }) => {
               </svg>
               Propietarios
             </button>
+
+            <button
+              onClick={() => setCurrentPage('items')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                currentPage === 'items' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              Inventario
+            </button>
+
+            <button
+              onClick={() => setCurrentPage('veterinarians')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                currentPage === 'veterinarians' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Veterinarios
+            </button>
           </nav>
 
           <div className="p-4">
@@ -459,28 +753,61 @@ const Dashboard = ({ onLogout }) => {
           setSelectedItem(null);
         }}
         title={`${selectedItem ? 'Editar' : 'Agregar'} ${
-          currentPage === 'pets' ? 'Mascota' : 'Propietario'
+          currentPage === 'pets' ? 'Mascota' : 
+          currentPage === 'owners' ? 'Propietario' :
+          currentPage === 'items' ? 'Item' : 'Veterinario'
         }`}
       >
-        {currentPage === 'pets' ? (
-          <PetForm
-            pet={selectedItem}
-            onSubmit={selectedItem ? handleUpdate : handleCreate}
-            onClose={() => {
-              setIsModalOpen(false);
-              setSelectedItem(null);
-            }}
-          />
-        ) : (
-          <OwnerForm
-            owner={selectedItem}
-            onSubmit={selectedItem ? handleUpdate : handleCreate}
-            onClose={() => {
-              setIsModalOpen(false);
-              setSelectedItem(null);
-            }}
-          />
-        )}
+        {(() => {
+          switch(currentPage) {
+            case 'pets':
+              return (
+                <PetForm
+                  pet={selectedItem}
+                  onSubmit={selectedItem ? handleUpdate : handleCreate}
+                  onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                  }}
+                />
+              );
+            case 'owners':
+              return (
+                <OwnerForm
+                  owner={selectedItem}
+                  onSubmit={selectedItem ? handleUpdate : handleCreate}
+                  onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                  }}
+                />
+              );
+            case 'items':
+              return (
+                <ItemForm
+                  item={selectedItem}
+                  onSubmit={selectedItem ? handleUpdate : handleCreate}
+                  onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                  }}
+                />
+              );
+            case 'veterinarians':
+              return (
+                <VeterinarianForm
+                  veterinarian={selectedItem}
+                  onSubmit={selectedItem ? handleUpdate : handleCreate}
+                  onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedItem(null);
+                  }}
+                />
+              );
+            default:
+              return null;
+          }
+        })()}
       </Modal>
 
       {/* Modal de confirmación para eliminar */}
@@ -494,7 +821,11 @@ const Dashboard = ({ onLogout }) => {
       >
         <div className="p-6">
           <p className="mb-6">
-            ¿Estás seguro de que deseas eliminar {currentPage === 'pets' ? 'esta mascota' : 'este propietario'}?
+            ¿Estás seguro de que deseas eliminar {
+              currentPage === 'pets' ? 'esta mascota' : 
+              currentPage === 'owners' ? 'este propietario' :
+              currentPage === 'items' ? 'este item' : 'este veterinario'
+            }?
           </p>
           <div className="flex justify-end space-x-3">
             <button
@@ -518,6 +849,8 @@ const Dashboard = ({ onLogout }) => {
     </div>
   );
 };
+
+
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

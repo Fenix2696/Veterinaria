@@ -18,6 +18,9 @@ const Dashboard = ({ onLogout }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [items, setItems] = useState([]);
+  const [veterinarians, setVeterinarians] = useState([]);
+
 
   // Efecto para verificar autenticación
   useEffect(() => {
@@ -40,25 +43,52 @@ const Dashboard = ({ onLogout }) => {
     setLoading(true);
     setError('');
     const token = localStorage.getItem('token');
-
+  
     try {
-      const endpoint = currentPage === 'pets' ? 'pets' : 'owners';
-      const response = await fetch(`${API_URL}/${endpoint}`, {
+      let endpoint = '';
+      switch(currentPage) {
+        case 'pets':
+          endpoint = '/pets';
+          break;
+        case 'owners':
+          endpoint = '/owners';
+          break;
+        case 'items':
+          endpoint = '/items';
+          break;
+        case 'veterinarians':
+          endpoint = '/veterinarians';
+          break;
+        default:
+          return;
+      }
+      
+      const response = await fetch(`${API_URL}${endpoint}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
+  
       if (!response.ok) {
         throw new Error(`Error al cargar ${endpoint}`);
       }
-
+  
       const data = await response.json();
-      if (currentPage === 'pets') {
-        setPets(Array.isArray(data) ? data : []);
-      } else {
-        setOwners(Array.isArray(data) ? data : []);
+      
+      switch(currentPage) {
+        case 'pets':
+          setPets(data.data || []);
+          break;
+        case 'owners':
+          setOwners(data.data || []);
+          break;
+        case 'items':
+          setItems(data.data || []);
+          break;
+        case 'veterinarians':
+          setVeterinarians(data.data || []);
+          break;
       }
     } catch (err) {
       console.error('Error:', err);
@@ -67,80 +97,6 @@ const Dashboard = ({ onLogout }) => {
       setLoading(false);
     }
   };
-
-  // Funciones CRUD
-  const handleCreate = async (formData) => {
-    const token = localStorage.getItem('token');
-    try {
-      const endpoint = currentPage === 'pets' ? 'pets' : 'owners';
-      const response = await fetch(`${API_URL}/${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error al crear ${endpoint}`);
-      }
-
-      await fetchData();
-      setIsModalOpen(false);
-    } catch (err) {
-      throw new Error(err.message);
-    }
-  };
-
-  const handleUpdate = async (formData) => {
-    const token = localStorage.getItem('token');
-    try {
-      const endpoint = currentPage === 'pets' ? 'pets' : 'owners';
-      const response = await fetch(`${API_URL}/${endpoint}/${selectedItem._id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error al actualizar ${endpoint}`);
-      }
-
-      await fetchData();
-      setIsModalOpen(false);
-      setSelectedItem(null);
-    } catch (err) {
-      throw new Error(err.message);
-    }
-  };
-
-  const handleDelete = async () => {
-    const token = localStorage.getItem('token');
-    try {
-      const endpoint = currentPage === 'pets' ? 'pets' : 'owners';
-      const response = await fetch(`${API_URL}/${endpoint}/${itemToDelete._id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error al eliminar ${endpoint}`);
-      }
-
-      await fetchData();
-      setIsDeleteModalOpen(false);
-      setItemToDelete(null);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
 
   // Renderizado de listas
   const renderPetList = () => (
@@ -304,6 +260,92 @@ const Dashboard = ({ onLogout }) => {
       )}
     </div>
   );
+
+  // Añadir las nuevas funciones de renderizado:
+const renderItemList = () => (
+  <div className="bg-white shadow rounded-lg p-6">
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-2xl font-bold">Inventario</h2>
+      <button
+        onClick={() => {
+          setSelectedItem(null);
+          setIsModalOpen(true);
+        }}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-200"
+      >
+        Agregar Item
+      </button>
+    </div>
+
+    {loading && (
+      <div className="flex justify-center items-center py-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    )}
+
+    {error && (
+      <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+        {error}
+      </div>
+    )}
+
+    {!loading && !error && (
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nombre
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cantidad
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Precio
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Categoría
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {items.map((item) => (
+              <tr key={item._id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">{item.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
+                <td className="px-6 py-4 whitespace-nowrap">${item.price.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{item.category}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={() => {
+                      setSelectedItem(item);
+                      setIsModalOpen(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-900 mr-4"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setItemToDelete(item);
+                      setIsDeleteModalOpen(true);
+                    }}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+);
 
 
   // Renderizado del contenido principal

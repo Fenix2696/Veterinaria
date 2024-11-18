@@ -39,6 +39,8 @@ let db;
 let usersCollection;
 let petsCollection;
 let ownersCollection;
+let itemsCollection;
+let veterinariansCollection;
 
 // Ruta de estado/health check
 app.get('/api/health', (req, res) => {
@@ -49,7 +51,9 @@ app.get('/api/health', (req, res) => {
         collections: {
             users: !!usersCollection,
             pets: !!petsCollection,
-            owners: !!ownersCollection
+            owners: !!ownersCollection,
+            items: !!itemsCollection,
+            veterinarians: !!veterinariansCollection
         }
     });
 });
@@ -69,12 +73,17 @@ MongoClient.connect(mongoUri, {
     usersCollection = db.collection('users');
     petsCollection = db.collection('pets');
     ownersCollection = db.collection('owners');
+    itemsCollection = db.collection('items');
+    veterinariansCollection = db.collection('veterinarians');
     
     // Configurar índices importantes
     Promise.all([
         usersCollection.createIndex({ email: 1 }, { unique: true }),
         petsCollection.createIndex({ name: 1 }),
-        ownersCollection.createIndex({ email: 1 }, { unique: true })
+        ownersCollection.createIndex({ email: 1 }, { unique: true }),
+        itemsCollection.createIndex({ name: 1 }, { unique: true }),
+        veterinariansCollection.createIndex({ email: 1 }, { unique: true }),
+        veterinariansCollection.createIndex({ license: 1 }, { unique: true })
     ])
     .then(() => {
         console.log('Database indexes created successfully');
@@ -87,11 +96,15 @@ MongoClient.connect(mongoUri, {
     const authRoutes = require('./src/routes/auth')(usersCollection);
     const petsRoutes = require('./src/routes/pets')(petsCollection);
     const ownersRoutes = require('./src/routes/owners')(ownersCollection);
+    const itemsRoutes = require('./src/routes/items')(itemsCollection);
+    const veterinariansRoutes = require('./src/routes/veterinarians')(veterinariansCollection);
 
     // Configurar rutas con sus prefijos
     app.use('/api/auth', authRoutes);
     app.use('/api/pets', petsRoutes);
     app.use('/api/owners', ownersRoutes);
+    app.use('/api/items', itemsRoutes);
+    app.use('/api/veterinarians', veterinariansRoutes);
 
     // Ruta catch-all para servir la aplicación React en producción
     if (process.env.NODE_ENV === 'production') {
